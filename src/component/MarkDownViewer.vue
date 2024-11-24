@@ -87,26 +87,11 @@ import "highlight.js/styles/github.css";
 export default {
     name: "LargeMarkdownViewer",
     props: {
-        content: {
-            type: String,
-            required: true,
-        },
-        showToolbar: {
-            type: Boolean,
-            default: true,
-        },
-        autoDetectLanguage: {
-            type: Boolean,
-            default: true,
-        },
-        width: {
-            type: [String, Number],
-            default: "100%",
-        },
-        height: {
-            type: [String, Number],
-            default: "350px",
-        },
+        content: { type: String, required: true },
+        showToolbar: { type: Boolean, default: true },
+        autoDetectLanguage: { type: Boolean, default: true },
+        width: { type: [String, Number], default: "100%" },
+        height: { type: [String, Number], default: "300px" },
     },
 
     emits: ["word-select", "word-dbclick"],
@@ -160,7 +145,6 @@ export default {
             });
 
             while ((match = regex.exec(this.content)) !== null) {
-                // 添加前面的 Markdown 内容
                 if (match.index > lastIndex) {
                     const markdownContent = this.content.slice(
                         lastIndex,
@@ -176,24 +160,19 @@ export default {
                     }
                 }
 
-                // 处理 sentence_analysis 内容
                 const analysisContent = match[1];
                 blocks.push({
                     type: "sentence-analysis",
                     english: this.extractTagContent(analysisContent, "english"),
                     chinese: this.extractTagContent(analysisContent, "chinese"),
-                    grammar: marked(
-                        this.extractTagContent(analysisContent, "grammar"),
-                    ),
-                    notes: marked(
-                        this.extractTagContent(analysisContent, "notes"),
-                    ),
+                    grammar: this.extractTagContent(analysisContent, "grammar"),
+
+                    notes: this.extractTagContent(analysisContent, "notes"),
                 });
 
                 lastIndex = regex.lastIndex;
             }
 
-            // 添加剩余的 Markdown 内容
             if (lastIndex < this.content.length) {
                 const markdownContent = this.content.slice(lastIndex);
                 if (markdownContent.trim()) {
@@ -214,20 +193,16 @@ export default {
             const endTag = `</${tagName}>`;
             const startIndex = content.indexOf(startTag);
             const endIndex = content.indexOf(endTag);
-
-            if (startIndex === -1 || endIndex === -1) {
-                return "";
-            }
-
-            return content
-                .substring(startIndex + startTag.length, endIndex)
-                .trim();
+            return startIndex === -1 || endIndex === -1
+                ? ""
+                : content
+                      .substring(startIndex + startTag.length, endIndex)
+                      .trim();
         },
 
         handleSelection(event) {
             const selection = window.getSelection();
             const selectedText = selection.toString().trim();
-
             if (selectedText) {
                 this.$emit("word-select", selectedText);
             }
@@ -236,7 +211,6 @@ export default {
         handleDoubleClick(event) {
             const selection = window.getSelection();
             const selectedText = selection.toString().trim();
-
             if (selectedText) {
                 this.$emit("word-dbclick", selectedText);
             }
@@ -265,30 +239,30 @@ export default {
 .markdown-viewer-container {
     display: flex;
     flex-direction: column;
-    border: 1px solid #e1e4e8;
-    border-radius: 6px;
+    /* border: 1px solid #e1e4e8; */
+    /* border-radius: 6px; */
     overflow: hidden;
-    background-color: white;
-    font-size: 16px;
+    /* background-color: white; */
+    font-size: 14px;
 }
 
 .toolbar {
     display: flex;
-    gap: 8px;
-    padding: 12px;
+    gap: 6px;
+    padding: 8px;
     background-color: #f6f8fa;
     border-bottom: 1px solid #e1e4e8;
     flex-shrink: 0;
 }
 
 .toolbar-btn {
-    padding: 6px 16px;
+    padding: 4px 12px;
     border: 1px solid #e1e4e8;
-    border-radius: 6px;
+    border-radius: 4px;
     background-color: white;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .toolbar-btn:hover {
@@ -299,8 +273,8 @@ export default {
 .markdown-content-wrapper {
     flex: 1;
     overflow-y: auto;
-    background-color: white;
-    padding: 24px;
+    /* background-color: white; */
+    padding: 16px;
 }
 
 .markdown-content-wrapper.dark-mode {
@@ -310,9 +284,9 @@ export default {
 
 .sentence-analysis {
     border: 1px solid #e1e4e8;
-    border-radius: 6px;
-    margin: 0.75rem 0;
-    padding: 1rem;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+    padding: 0.75rem;
     background-color: #f8f9fa;
 }
 
@@ -322,7 +296,7 @@ export default {
 }
 
 .analysis-section {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
 .analysis-section:last-child {
@@ -330,9 +304,9 @@ export default {
 }
 
 .analysis-title {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.2rem;
     color: #374151;
 }
 
@@ -342,8 +316,8 @@ export default {
 
 .english-text {
     color: #2563eb;
-    font-size: 0.95rem;
-    line-height: 1.5;
+    font-size: 0.9rem;
+    line-height: 1.4;
     white-space: pre-wrap;
     margin: 0;
     user-select: text;
@@ -356,8 +330,8 @@ export default {
 
 .chinese-text {
     color: #059669;
-    font-size: 0.95rem;
-    line-height: 1.5;
+    font-size: 0.9rem;
+    line-height: 1.4;
     white-space: pre-wrap;
     margin: 0;
     user-select: text;
@@ -371,11 +345,11 @@ export default {
 .grammar-text {
     color: #4b5563;
     white-space: pre-wrap;
-    line-height: 1.5;
-    font-size: 0.9rem;
+    line-height: 1.4;
+    font-size: 0.85rem;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.2rem;
     margin: 0;
 }
 
@@ -386,8 +360,8 @@ export default {
 .notes-text {
     color: #92400e;
     font-style: italic;
-    line-height: 1.5;
-    font-size: 0.9rem;
+    line-height: 1.4;
+    font-size: 0.85rem;
     white-space: pre-wrap;
     margin: 0;
 }
@@ -396,9 +370,8 @@ export default {
     color: #fde68a;
 }
 
-/* 滚动条样式 */
 .markdown-content-wrapper::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
 }
 
 .markdown-content-wrapper::-webkit-scrollbar-track {
@@ -407,10 +380,38 @@ export default {
 
 .markdown-content-wrapper::-webkit-scrollbar-thumb {
     background: #ccc;
-    border-radius: 5px;
+    border-radius: 4px;
 }
 
 .markdown-content-wrapper::-webkit-scrollbar-thumb:hover {
     background: #999;
+}
+
+/* Markdown content styles */
+:deep(.markdown-content) {
+    line-height: 1.4;
+}
+
+:deep(.markdown-content p) {
+    margin: 0.5rem 0;
+}
+
+:deep(.markdown-content ul),
+:deep(.markdown-content ol) {
+    margin: 0.3rem 0;
+    padding-left: 1.2rem;
+}
+
+:deep(.markdown-content li) {
+    margin: 0.1rem 0;
+}
+
+:deep(.markdown-content li p) {
+    margin: 0;
+}
+
+:deep(.markdown-content li > ul),
+:deep(.markdown-content li > ol) {
+    margin: 0.1rem 0;
 }
 </style>

@@ -61,73 +61,78 @@
     </div>
 </template>
 
-<script>
-import { ref, watch } from "vue";
+<script setup>
+import { ref, watchEffect, watch } from "vue";
 
-export default {
-    name: "WordTagList",
-    props: {
-        words: {
-            type: Array,
-            required: true,
-            validator: function (value) {
-                return value.every(
-                    (word) =>
-                        word.hasOwnProperty("word") &&
-                        word.hasOwnProperty("pronunciation") &&
-                        word.hasOwnProperty("meaningInSentence") &&
-                        word.hasOwnProperty("meanings") &&
-                        Array.isArray(word.meanings) &&
-                        word.meanings.every(
-                            (item) =>
-                                item.hasOwnProperty("property") &&
-                                item.hasOwnProperty("meaning"),
-                        ),
-                );
-            },
+const props = defineProps({
+    words: {
+        type: Array,
+        required: true,
+        validator: (value) => {
+            return value.every(
+                (word) =>
+                    word.hasOwnProperty("word") &&
+                    word.hasOwnProperty("pronunciation") &&
+                    word.hasOwnProperty("meaningInSentence") &&
+                    word.hasOwnProperty("meanings") &&
+                    Array.isArray(word.meanings) &&
+                    word.meanings.every(
+                        (item) =>
+                            item.hasOwnProperty("property") &&
+                            item.hasOwnProperty("meaning"),
+                    ),
+            );
         },
     },
-    data() {
-        return {
-            audio: null,
-        };
-    },
-    setup(props) {
-        const expandedWords = ref({});
+});
 
-        // 监听 words 属性的变化
-        watch(
-            () => props.words,
-            (newWords) => {
-                if (newWords && newWords.length > 0) {
-                    // 当数据更新时，设置所有标签为展开状态
-                    newWords.forEach((_, index) => {
-                        expandedWords.value[index] = true;
-                    });
-                }
-            },
-            { immediate: true }, // 立即执行一次
-        );
+const expandedWords = ref({});
+const audio = ref(null);
+const previousLength = ref(0);
 
-        return {
-            expandedWords,
-        };
-    },
-    methods: {
-        toggleExpand(index) {
-            this.expandedWords[index] = !this.expandedWords[index];
-        },
-        playPronunciation(url) {
-            if (!url) return;
-
-            if (!this.audio) {
-                this.audio = new Audio(url);
-            } else {
-                this.audio.src = url;
+// 使用 watch 监听数组的变化
+watch(
+    () => props.words,
+    (newWords) => {
+        if (newWords?.length > 0) {
+            // 如果数组长度增加了，说明添加了新单词
+            if (newWords.length > previousLength.value) {
+                // 设置新添加的单词为展开状态
+                expandedWords.value[newWords.length - 1] = true;
             }
-            this.audio.play();
-        },
+            // 更新前一次的长度
+            previousLength.value = newWords.length;
+        }
     },
+    {
+        deep: true, // 深度监听数组变化
+        immediate: true, // 立即执行
+    },
+);
+
+// 管理音频资源
+watchEffect((onCleanup) => {
+    if (audio.value) {
+        onCleanup(() => {
+            audio.value.pause();
+            audio.value = null;
+        });
+    }
+});
+
+const toggleExpand = (index) => {
+    expandedWords.value[index] = !expandedWords.value[index];
+};
+
+const playPronunciation = (url) => {
+    if (!url) return;
+
+    if (!audio.value) {
+        audio.value = new Audio(url);
+    } else {
+        audio.value.src = url;
+    }
+    audio.value.play();
 };
 </script>
 
@@ -183,7 +188,7 @@ export default {
 }
 
 .details {
-    width: 200px;
+    width: 190px;
     padding: 12px;
     margin-top: -1px;
     background-color: white;
