@@ -74,12 +74,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { Document, Menu as IconMenu, Setting } from "@element-plus/icons-vue";
 import WordTag from "./component/WordTag.vue";
 import MarkdownViewer from "./component/MarkDownViewer.vue";
 import SentenceInput from "./component/SentenceInput.vue";
 import { sentenceService } from "./service/sentence.js";
+import { ipcRenderer } from "electron";
 
 const isHovered = ref(false);
 const sentence = ref("");
@@ -134,6 +135,18 @@ const handleClear = () => {
 const handleSelectWord = (word: string) => {
     selectedText.value = word;
 };
+
+// 钩子函数
+onMounted(() => {
+    // 使用 electronAPI 而不是直接使用 ipcRenderer
+    window.electronAPI.onTriggerFunction((params) => {
+        console.log("Received params:", params);
+        // 调用子组件的update:modelValue
+
+        sentence.value = params.sentence;
+        handleExplain();
+    });
+});
 </script>
 
 <style scoped>

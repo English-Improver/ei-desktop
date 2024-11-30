@@ -22,8 +22,8 @@
                 />
                 <div class="input-actions">
                     <div class="action-group">
-                        <el-button 
-                            type="primary" 
+                        <el-button
+                            type="primary"
                             size="small"
                             :loading="isExplain"
                             :disabled="!inputValue"
@@ -31,8 +31,8 @@
                         >
                             解释句子
                         </el-button>
-                        <el-button 
-                            type="default" 
+                        <el-button
+                            type="default"
                             size="small"
                             :disabled="!inputValue"
                             @click="handleClear"
@@ -48,10 +48,10 @@
         <div class="selection-info">
             <div class="selection-header">
                 <span class="header-title">已选中文本</span>
-                <el-button 
-                    link 
-                    @click="clearSelection" 
-                    size="small" 
+                <el-button
+                    link
+                    @click="clearSelection"
+                    size="small"
                     type="info"
                     :disabled="!localSelectedText"
                 >
@@ -68,7 +68,7 @@
                 resize="none"
                 placeholder="选中的文本将显示在这里..."
             />
-            
+
             <div class="action-buttons">
                 <el-button
                     type="primary"
@@ -119,7 +119,7 @@ const props = defineProps({
     },
     isExplain: {
         type: Boolean,
-        default: false
+        default: false,
     },
     isTranslating: {
         type: Boolean,
@@ -138,7 +138,7 @@ const emit = defineEmits([
     "translate",
     "search",
     "explain",
-    "clear"
+    "clear",
 ]);
 
 const inputValue = ref(props.modelValue);
@@ -149,6 +149,14 @@ watch(
     () => props.selectedText,
     (newVal) => {
         localSelectedText.value = newVal;
+    },
+);
+
+// 当父组件的 sentence 值变化时，更新本地的 inputValue
+watch(
+    () => props.modelValue,
+    (newValue) => {
+        inputValue.value = newValue;
     },
 );
 
@@ -375,12 +383,14 @@ defineExpose({
     .sentence-input-container {
         flex-direction: column;
     }
-    
-    .input-section, .selection-info {
+
+    .input-section,
+    .selection-info {
         width: 100%;
     }
 
-    .action-group, .action-buttons {
+    .action-group,
+    .action-buttons {
         justify-content: stretch;
     }
 }

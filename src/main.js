@@ -1,55 +1,133 @@
-const { app, BrowserWindow } = require('electron');
-const path = require('node:path');
+const { app, BrowserWindow, ipcMain } = require("electron");
+const path = require("node:path");
+const express = require("express");
+const bodyParser = require("body-parser");
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
-  app.quit();
-}
+let mainWindow = null;
+const PORT = 2999;
+
+// Express 服务器配置
+const setupServer = () => {
+  const server = express();
+  server.use(bodyParser.json());
+  server.use(bodyParser.urlencoded({ extended: true }));
+
+  // API 路由
+  server.post("/api/trigger", (req, res) => {
+    const params = req.body;
+    console.log("Received parameters:", params);
+
+    // 确保窗口存在再发送消息
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("trigger-vue-function", params);
+      res.json({ status: "success" });
+    } else {
+      res
+        .status(500)
+        .json({ status: "error", message: "Window not available" });
+    }
+  });
+
+  // 错误处理中间件
+  server.use((err, req, res, next) => {
+    console.error("Server Error:", err);
+    res.status(500).json({ status: "error", message: err.message });
+  });
+
+  return server;
+};
 
 const createWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  // 创建窗口
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      // 添加安全相关配置
+      sandbox: true,
+      webSecurity: true,
     },
   });
 
-  // and load the index.html of the app.
+  // 日志输出用于调试
+  console.log("Environment:", process.env.NODE_ENV);
+  console.log("Dev URL:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
+  console.log(
+    "Production path:",
+    path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+  );
+  console.log("Current directory:", __dirname);
+
+  // 加载应用
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    // 生产环境路径
+    const indexPath = path.join(
+      __dirname,
+      `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`,
+    );
+    console.log("Loading file:", indexPath);
+
+    try {
+      mainWindow.loadFile(indexPath);
+    } catch (error) {
+      console.error("Failed to load index.html:", error);
+    }
   }
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // 开发工具
+  if (process.env.NODE_ENV === "development") {
+    mainWindow.webContents.openDevTools();
+  }
+
+  // 监听窗口加载完成事件
+  mainWindow.webContents.on("did-finish-load", () => {
+    console.log("Window loaded successfully");
+  });
+
+  // 监听加载失败事件
+  mainWindow.webContents.on(
+    "did-fail-load",
+    (event, errorCode, errorDescription) => {
+      console.error("Failed to load:", errorCode, errorDescription);
+    },
+  );
 };
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+// 应用初始化
 app.whenReady().then(() => {
   createWindow();
 
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  app.on('activate', () => {
+  // 启动 Express 服务器
+  const server = setupServer();
+  server
+    .listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    })
+    .on("error", (error) => {
+      console.error("Server failed to start:", error);
+    });
+
+  // macOS 应用激活处理
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
 });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+// 窗口关闭处理
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+// 应用退出处理
+app.on("before-quit", () => {
+  // 清理资源
+});
