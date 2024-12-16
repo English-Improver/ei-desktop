@@ -1,337 +1,234 @@
 <template>
-    <div class="app-container">
-        <!-- 菜单部分 -->
-        <div
-            class="menu-area"
-            :class="{ 'menu-visible': isHovered }"
-            @mouseenter="handleMouseEnter"
-            @mouseleave="handleMouseLeave"
-        >
-            <div class="menu-trigger"></div>
+    <div id="app" class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- 可选添加一个简化的toggle区域，类似一条细线 -->
+            <div class="sidebar-toggle"></div>
             <el-menu class="nav-menu" :collapse="false">
-                <el-menu-item index="1">
-                    <el-icon><document /></el-icon>
-                    <span>文本分析</span>
+                <div class="menu-header">
+                    <h3>Menu</h3>
+                </div>
+                <el-menu-item index="1" @click="goToHome">
+                    <el-icon><Document /></el-icon>
+                    <span>Text Analysis</span>
                 </el-menu-item>
-                <el-menu-item index="2">
-                    <el-icon><icon-menu /></el-icon>
-                    <span>词汇本</span>
+                <el-menu-item index="2" @click="goToBook">
+                    <el-icon><IconMenu /></el-icon>
+                    <span>Books</span>
                 </el-menu-item>
                 <el-menu-item index="3">
-                    <el-icon><setting /></el-icon>
-                    <span>设置</span>
+                    <el-icon><Setting /></el-icon>
+                    <span>Settings</span>
                 </el-menu-item>
             </el-menu>
         </div>
 
-        <!-- 主要内容区域 -->
-        <div class="main-content">
-            <!-- 输入区域 -->
-            <SentenceInput
-                v-model="sentence"
-                :rows="3"
-                placeholder="请输入或粘贴文本..."
-                @translate="handleTranslate"
-                @explain="handleExplain"
-                @clear="handleClear"
-                :isExplain="isExplain"
-                :isTranslating="isTranslating"
-                v-model:selectedText="selectedText"
-            />
-
-            <!-- 解释内容区域 -->
-            <div class="analysis-container">
-                <div
-                    class="analysis-area"
-                    v-if="explanation || words.length > 0"
-                >
-                    <div class="left-section">
-                        <template v-if="explanation">
-                            <div class="explanation-section">
-                                <MarkdownViewer
-                                    :content="explanation"
-                                    :showToolbar="false"
-                                    @word-dbclick="handleSelectWord"
-                                    @word-select="handleSelectWord"
-                                />
-                            </div>
-                        </template>
-                        <div v-else class="empty-section">暂无解释内容</div>
-                    </div>
-
-                    <div class="right-section">
-                        <template v-if="words.length > 0">
-                            <div class="words-section">
-                                <WordTag :words="words" />
-                            </div>
-                        </template>
-                        <div v-else class="empty-section">暂无词汇内容</div>
-                    </div>
-                </div>
-            </div>
+        <!-- Main Content -->
+        <div class="main-view">
+            <RouterView />
         </div>
     </div>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted } from "vue";
+<script setup>
+import { onMounted } from "vue";
 import { Document, Menu as IconMenu, Setting } from "@element-plus/icons-vue";
-import WordTag from "./component/WordTag.vue";
-import MarkdownViewer from "./component/MarkDownViewer.vue";
-import SentenceInput from "./component/SentenceInput.vue";
-import { sentenceService } from "./service/sentence.js";
-import { ipcRenderer } from "electron";
+import router from "./router/router.js";
 
-const isHovered = ref(false);
-const sentence = ref("");
-const selectedText = ref("");
-const explanation = ref("");
-const words = ref([]);
-const isTranslating = ref(false);
-const isExplain = ref(false);
-
-const handleMouseEnter = () => {
-    isHovered.value = true;
-};
-
-const handleMouseLeave = () => {
-    isHovered.value = false;
-};
-
-const handleTranslate = async (word: string) => {
-    if (!word || isTranslating.value) return;
-
-    isTranslating.value = true;
-    try {
-        const res = await sentenceService.explainWordInSentence(
-            sentence.value,
-            word,
-        );
-        words.value = [...words.value, res];
-    } finally {
-        isTranslating.value = false;
-    }
-};
-
-const handleExplain = async () => {
-    if (!sentence.value) return;
-    isExplain.value = true;
-    try {
-        const res = await sentenceService.explain(sentence.value);
-        explanation.value = res;
-        isExplain.value = false;
-    } catch (e) {
-        console.error(e);
-        isExplain.value = false;
-    }
-};
-
-const handleClear = () => {
-    sentence.value = "";
-    explanation.value = "";
-    words.value = [];
-};
-
-const handleSelectWord = (word: string) => {
-    selectedText.value = word;
-};
-
-// 钩子函数
 onMounted(() => {
-    // 使用 electronAPI 而不是直接使用 ipcRenderer
-    window.electronAPI.onTriggerFunction((params) => {
-        console.log("Received params:", params);
-        // 调用子组件的update:modelValue
-
-        sentence.value = params.sentence;
-        handleExplain();
-    });
+    console.log("App component mounted");
 });
+
+const goToHome = () => {
+    console.log("Navigating to home");
+    router.push("/");
+};
+
+const goToBook = () => {
+    console.log("Navigating to book");
+    router.push("/book");
+};
 </script>
 
 <style scoped>
 .app-container {
-    height: 100%;
-    display: flex;
-    background-color: #fafafa;
-    padding: 8px;
-    box-sizing: border-box;
-    overflow: hidden;
+    --menu-width: 180px; /* 菜单展开时的宽度 */
+    --trigger-width: 4px; /* 折叠时的触发区域非常窄，让用户靠近左侧才触发 */
+    --primary-color: #409eff;
+    --border-color: #e4e7ed;
+    --bg-color: #f5f7fa;
+    --text-primary: #303133;
+    --text-secondary: #606266;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --transition-speed: 0.25s;
+
+    width: 100%;
+    height: 100vh;
+    background-color: var(--bg-color);
+    position: relative;
+    margin: 0;
 }
 
-.main-content {
-    flex: 1;
-    margin-left: 20px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 4px;
-}
-
-/* 菜单样式 */
-.menu-area {
+/* Sidebar */
+.sidebar {
     position: fixed;
     left: 0;
     top: 0;
     height: 100%;
-    z-index: 1000;
+    z-index: 2000;
+    width: var(--trigger-width); /* 初始仅为4px的细条 */
+    background-color: rgba(255, 255, 255, 0.5);
     display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    transition: width var(--transition-speed) ease;
+    /* 可选添加毛玻璃效果，让主内容在菜单显示时依然微透可见 */
+    backdrop-filter: blur(8px);
 }
 
-.menu-trigger {
-    width: 20px;
+/* 鼠标接近左侧4px时才展开菜单 */
+.sidebar:hover {
+    width: var(--menu-width);
+}
+
+.sidebar-toggle {
+    width: var(--trigger-width);
     height: 100%;
     position: relative;
     cursor: pointer;
-}
-
-.menu-trigger::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%; /* 充满容器 */
-    background-color: rgba(0, 0, 0, 0.05);
-    transition: background-color 0.3s ease;
-}
-
-.menu-trigger:hover::after {
-    background-color: rgba(0, 0, 0, 0.1);
-}
-
-.nav-menu {
-    width: 200px;
-    height: 100%;
-    border: none;
-    background: white;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-    transform: translateX(-200px);
-    transition: transform 0.3s ease;
-    position: fixed;
-    left: 0;
-    top: 0;
-}
-
-.menu-visible .nav-menu {
-    transform: translateX(0);
-}
-
-/* 分析容器 */
-.analysis-container {
-    flex: 1;
-    min-height: 0;
-    height: 400px;
-    /* margin-top: 12px; */
-    overflow: hidden;
-}
-
-.analysis-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    max-height: 500px;
-    gap: 8px; /* 减小顶部间距 */
-    margin-top: 8px; /* 减小与输入框的间距 */
-}
-
-/* 分析结果区域 */
-.analysis-area {
-    display: flex;
-    flex-direction: row;
-    gap: 12px; /* 减小左右区域的间距 */
-    height: 350px; /* 微调整体高度 */
-    min-height: 0;
-    overflow: hidden;
-}
-
-.left-section {
-    flex: 1;
-    /* min-width: 0; */
-    display: flex;
-    height: 350px;
-    flex-direction: column;
-    /* background: white; */
-    /* border-radius: 6px; */
-    /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); */
-}
-
-.right-section {
-    width: 283px; /* 略微减小右侧宽度 */
-    height: 350px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    background: white;
-    border-radius: 6px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.explanation-section,
-.words-section {
-    flex: 1;
-    display: flex;
-    /* align-items: center; */
-    /* justify-content: center; */
-    color: #909399;
-    font-size: 14px;
-    background-color: #f8f9fa;
-    border: 1px dashed #e4e7ed;
-    border-radius: 6px;
-    margin: 8px; /* 添加外边距使空状态更美观 */
-    padding: 12px 16px; /* 统一内边距 */
-
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-.empty-section {
-    flex: 1;
+    background-color: rgba(0, 0, 0, 0.03);
+    transition: background-color var(--transition-speed) ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #909399;
-    font-size: 14px;
-    background-color: #f8f9fa;
-    border: 1px dashed #e4e7ed;
-    border-radius: 6px;
-    margin: 8px; /* 添加外边距使空状态更美观 */
 }
 
-/* 移动端响应式布局 */
-@media screen and (max-width: 768px) {
+.sidebar-toggle::after {
+    content: "";
+    width: 2px;
+    height: 24px;
+    background-color: var(--primary-color);
+    border-radius: 1px;
+    opacity: 0.5;
+    transition: opacity var(--transition-speed) ease;
+}
+
+.sidebar-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-toggle:hover::after {
+    opacity: 1;
+}
+
+.nav-menu {
+    height: 100%;
+    border: none;
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+    transform: translateX(
+        calc(-1 * (var(--menu-width) - var(--trigger-width)))
+    );
+    transition: transform var(--transition-speed) ease;
+}
+
+.sidebar:hover .nav-menu {
+    transform: translateX(0);
+}
+
+.menu-header {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.menu-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Menu Items */
+.nav-menu >>> .el-menu-item {
+    height: 40px;
+    line-height: 40px;
+    padding: 0 16px !important;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    transition:
+        background-color var(--transition-speed) ease,
+        color var(--transition-speed) ease;
+}
+
+.nav-menu >>> .el-menu-item.is-active {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.nav-menu >>> .el-menu-item:not(.is-active):hover {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+}
+
+/* 主内容区：占满剩余空间 */
+.main-view {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
     .app-container {
-        padding: 6px;
+        --menu-width: 160px;
+        --trigger-width: 4px; /* 在小屏幕下仍保持很窄的触发区域 */
     }
 
-    .main-content {
-        margin-left: 16px;
-        padding: 2px;
+    .menu-header {
+        height: 40px;
+        padding: 0 12px;
     }
 
-    .analysis-container {
-        gap: 6px;
-        margin-top: 6px;
+    .menu-header h3 {
+        font-size: 14px;
     }
 
-    .analysis-area {
-        flex-direction: column;
-        gap: 8px;
-        height: calc(100vh - 120px);
+    .nav-menu >>> .el-menu-item {
+        height: 36px;
+        line-height: 36px;
+        padding: 0 12px !important;
+        font-size: 13px;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    .app-container {
+        --bg-color: #141414;
+        --text-primary: #ffffff;
+        --text-secondary: #cccccc;
+        --border-color: #333333;
     }
 
-    .right-section {
-        width: 100%;
-        height: 200px;
+    .nav-menu {
+        background: #1f1f1f;
     }
 
-    .explanation-section,
-    .words-section {
-        padding: 8px 12px;
+    .sidebar-toggle {
+        background-color: rgba(255, 255, 255, 0.03);
     }
 
-    .empty-section {
-        margin: 6px;
+    .sidebar-toggle:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-menu >>> .el-menu-item:not(.is-active):hover {
+        background-color: #2a2a2a;
     }
 }
 </style>

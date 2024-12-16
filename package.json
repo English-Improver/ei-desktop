@@ -6,6 +6,7 @@
   "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",
+    "dev": "NODE_ENV=development electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
@@ -35,10 +36,15 @@
   },
   "license": "MIT",
   "dependencies": {
+    "axios": "^1.7.9",
     "body-parser": "^1.20.3",
+    "dompurify": "^3.2.2",
     "electron-squirrel-startup": "^1.0.1",
     "element-plus": "^2.8.8",
     "express": "^4.21.1",
-    "vue": "^3.5.13"
+    "highlight.js": "^11.10.0",
+    "marked": "^15.0.3",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
   }
 }

@@ -29,7 +29,7 @@
                     :class="{ 'dark-mode': isDarkMode }"
                 >
                     <div class="analysis-section">
-                        <h3 class="analysis-title">English</h3>
+                        <h3 class="analysis-title">第{{ index + 1 }}个句子</h3>
                         <p
                             class="english-text"
                             @mouseup="handleSelection"
@@ -39,7 +39,8 @@
                         </p>
                     </div>
                     <div class="analysis-section">
-                        <h3 class="analysis-title">Chinese</h3>
+                        <!-- <h3 class="analysis-title">翻333译</h3> -->
+                         <span class="chinese-text">翻译：</span>
                         <p
                             class="chinese-text"
                             @mouseup="handleSelection"
@@ -49,7 +50,8 @@
                         </p>
                     </div>
                     <div class="analysis-section">
-                        <h3 class="analysis-title">Grammar Analysis</h3>
+                        <!-- <h5 class="analysis-title">Grammar Analysis</h5> -->
+                        <span class="grammer-text">语法:</span>
                         <div
                             class="grammar-text"
                             @mouseup="handleSelection"
@@ -58,7 +60,8 @@
                         ></div>
                     </div>
                     <div class="analysis-section">
-                        <h3 class="analysis-title">Notes</h3>
+                        <!-- <h3 class="analysis-title">Notes</h3> -->
+                         <span class="notes-text">含义</span>
                         <p
                             class="notes-text"
                             @mouseup="handleSelection"
@@ -91,7 +94,7 @@ export default {
         showToolbar: { type: Boolean, default: true },
         autoDetectLanguage: { type: Boolean, default: true },
         width: { type: [String, Number], default: "100%" },
-        height: { type: [String, Number], default: "300px" },
+        height: { type: [String, Number], default: "370px" },
     },
 
     emits: ["word-select", "word-dbclick"],
@@ -273,8 +276,7 @@ export default {
 .markdown-content-wrapper {
     flex: 1;
     overflow-y: auto;
-    /* background-color: white; */
-    padding: 16px;
+    background-color: white; 
 }
 
 .markdown-content-wrapper.dark-mode {
@@ -283,11 +285,12 @@ export default {
 }
 
 .sentence-analysis {
-    border: 1px solid #e1e4e8;
+    /* border: 1px solid #e1e4e8; */
     border-radius: 4px;
     margin: 0.5rem 0;
     padding: 0.75rem;
-    background-color: #f8f9fa;
+    /* background-color: #f8f9fa; */
+    border: 1px solid #e1e4e8;
 }
 
 .sentence-analysis.dark-mode {
@@ -297,6 +300,7 @@ export default {
 
 .analysis-section {
     margin-bottom: 0.5rem;
+    
 }
 
 .analysis-section:last-child {
@@ -343,7 +347,7 @@ export default {
 }
 
 .grammar-text {
-    color: #4b5563;
+    color: #3bcaca;
     white-space: pre-wrap;
     line-height: 1.4;
     font-size: 0.85rem;

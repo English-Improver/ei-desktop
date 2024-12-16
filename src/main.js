@@ -16,15 +16,11 @@ const setupServer = () => {
   server.post("/api/trigger", (req, res) => {
     const params = req.body;
     console.log("Received parameters:", params);
-
-    // 确保窗口存在再发送消息
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("trigger-vue-function", params);
       res.json({ status: "success" });
     } else {
-      res
-        .status(500)
-        .json({ status: "error", message: "Window not available" });
+      res.status(500).json({ status: "error", message: "Window not available" });
     }
   });
 
@@ -46,10 +42,24 @@ const createWindow = () => {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      // 添加安全相关配置
       sandbox: true,
       webSecurity: true,
     },
+  });
+
+  // 添加路由相关的 IPC 处理
+  ipcMain.on('navigate', (event, route) => {
+    console.log('Navigation requested to:', route);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('route-changed', route);
+    }
+  });
+
+  ipcMain.handle('get-current-route', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      return mainWindow.webContents.getURL();
+    }
+    return null;
   });
 
   // 日志输出用于调试
@@ -57,7 +67,7 @@ const createWindow = () => {
   console.log("Dev URL:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
   console.log(
     "Production path:",
-    path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+    path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
   );
   console.log("Current directory:", __dirname);
 
@@ -68,10 +78,9 @@ const createWindow = () => {
     // 生产环境路径
     const indexPath = path.join(
       __dirname,
-      `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`,
+      `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`
     );
     console.log("Loading file:", indexPath);
-
     try {
       mainWindow.loadFile(indexPath);
     } catch (error) {
@@ -90,12 +99,14 @@ const createWindow = () => {
   });
 
   // 监听加载失败事件
-  mainWindow.webContents.on(
-    "did-fail-load",
-    (event, errorCode, errorDescription) => {
-      console.error("Failed to load:", errorCode, errorDescription);
-    },
-  );
+  mainWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
+    console.error("Failed to load:", errorCode, errorDescription);
+  });
+
+  // 监听窗口关闭事件
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 };
 
 // 应用初始化
@@ -129,5 +140,15 @@ app.on("window-all-closed", () => {
 
 // 应用退出处理
 app.on("before-quit", () => {
-  // 清理资源
+  // 这里可以添加清理资源的代码
+  // 比如关闭数据库连接、清理临时文件等
+});
+
+// 错误处理
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
