@@ -247,6 +247,7 @@ onMounted(() => {
     scrollbar-color: var(--text-tertiary) transparent;
     /* 在需要时可增加padding */
     padding-bottom: var(--spacing-base);
+    margin: calc(var(--spacing-base) / 2);
     border: 1px dashed var(--border-color);
     border-radius: calc(var(--border-radius) - 2px);
 }

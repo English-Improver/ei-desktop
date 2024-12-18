@@ -7,4 +7,6 @@ body {
     /* height: 600px;
     width: 800px; */
     overflow-y: hidden;
+    box-sizing: border-box;
+
 }

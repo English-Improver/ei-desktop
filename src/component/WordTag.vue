@@ -1,6 +1,17 @@
 <!-- WordTagList.vue -->
 <template>
     <div class="word-list">
+        <!-- 新增保存所有按钮区域 -->
+        <div class="save-all-container">
+            <button
+                class="save-all-btn"
+                @click="saveAllWords"
+                title="保存所有单词"
+            >
+                <span class="save-icon">💾</span>
+                保存所有单词
+            </button>
+        </div>
         <div
             v-for="(word, index) in words"
             :key="index"
@@ -16,6 +27,14 @@
                 <span class="arrow" :class="{ rotated: expandedWords[index] }"
                     >▼</span
                 >
+                <!-- 新增保存按钮 -->
+                <button
+                    class="save-btn"
+                    @click.stop="saveWord(word)"
+                    title="保存单词"
+                >
+                    <span class="save-icon">💾</span>
+                </button>
             </div>
 
             <!-- 展开的详细信息 -->
@@ -134,18 +153,31 @@ const playPronunciation = (url) => {
     }
     audio.value.play();
 };
+
+// 新增保存单词方法
+const saveWord = (word) => {};
+
+// 新增保存所有单词的方法
+const saveAllWords = () => {
+    // emit("saveAllWords", props.words);
+};
 </script>
 
 <style scoped>
 .word-list {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    /* flex-wrap: wrap; */
     gap: 4px;
     padding: 4px;
+    height: 370px;
+    overflow-y: auto;
 }
 
 .word-tag-container {
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    /* position: relative; */
     display: inline-block;
     margin: 4px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
@@ -153,7 +185,8 @@ const playPronunciation = (url) => {
 }
 
 .tag {
-    display: inline-flex;
+    display: flex;
+    justify-content: flex-start;
     align-items: center;
     padding: 4px 12px;
     background-color: #e6f4ff;
@@ -164,7 +197,61 @@ const playPronunciation = (url) => {
     transition: all 0.3s;
     user-select: none;
 }
+/* 单词保存按钮样式 */
+.save-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 6px;
+    margin-left: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    opacity: 0.6;
+    transition:
+        opacity 0.2s,
+        background-color 0.2s;
+}
 
+.save-btn:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.save-icon {
+    font-size: 14px;
+}
+
+/** 新增保存所有按钮样式 */
+.save-all-container {
+    padding: 8px 4px;
+    border-bottom: 1px solid #e8e8e8;
+    margin-bottom: 8px;
+}
+
+.save-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 16px;
+    background-color: #e6f4ff;
+    color: #1677ff;
+    border: 1px solid #91caff;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+}
+
+.save-all-btn:hover {
+    background-color: #bae0ff;
+    border-color: #69b1ff;
+}
+
+.save-all-btn .save-icon {
+    font-size: 16px;
+}
 .tag:hover {
     background-color: #bae0ff;
     border-color: #69b1ff;
@@ -188,7 +275,7 @@ const playPronunciation = (url) => {
 }
 
 .details {
-    width: 190px;
+    /* width: 190px; */
     padding: 12px;
     margin-top: -1px;
     background-color: white;
