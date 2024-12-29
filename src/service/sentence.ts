@@ -1,0 +1,43 @@
+import { api } from "../api/axios";
+import { SaveSentenceDTO, WordVO } from "@/types/api.ts";
+
+/**
+ * 解释
+ */
+export const sentenceService = {
+  explain(sentence) {
+    return api.post("/sentence/explain", { sentence });
+  },
+  // 解释句子中的单词
+  explainWordInSentence(sentence0, word0) {
+    const wordDto = {
+      word: word0,
+      belongSentence: sentence0,
+    };
+    return api.post("/sentence/explainWordInSentence", wordDto);
+  },
+
+  getSelectedWords(sentence) {
+    return api.post("/sentence/getSelectedWords", { sentence });
+  },
+  saveSentence(sentence: SaveSentenceDTO) {
+    return api.post("/sentence/save", sentence); // 直接发送 DTO 对象，不需要包装
+  },
+  /**
+   *
+   * 在wordVO结构改变的时候记得更新
+   * @param sentenceId
+   * @param word
+   * @returns
+   */
+  saveWordInSentence(sentenceId: number, word: WordVO) {
+    return api.post("/sentence/saveWordInSentence", {
+      sentenceId: sentenceId,
+      word: word.word,
+      pronunciation: word.pronunciation,
+      meaningInSentence: word.meaningInSentence,
+      meanings: word.meanings,
+      isWord: word.isWord,
+    });
+  },
+};

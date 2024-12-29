@@ -1,7 +1,6 @@
-<!-- WordTagList.vue -->
 <template>
     <div class="word-list">
-        <!-- 新增保存所有按钮区域 -->
+        <!-- Save All Button Container -->
         <div class="save-all-container">
             <button
                 class="save-all-btn"
@@ -17,7 +16,7 @@
             :key="index"
             class="word-tag-container"
         >
-            <!-- 标签本身 -->
+            <!-- Tag -->
             <div
                 class="tag"
                 :class="{ active: expandedWords[index] }"
@@ -27,20 +26,32 @@
                 <span class="arrow" :class="{ rotated: expandedWords[index] }"
                     >▼</span
                 >
-                <!-- 新增保存按钮 -->
-                <button
-                    class="save-btn"
-                    @click.stop="saveWord(word)"
-                    title="保存单词"
-                >
-                    <span class="save-icon">💾</span>
-                </button>
+
+                <!-- Dropdown Menu -->
+                <div class="dropdown-container" @click.stop>
+                    <select
+                        v-model="word.contextType"
+                        class="context-dropdown"
+                        @change="handleContextChange(word, $event)"
+                    >
+                        <option value="1">当前句子</option>
+                        <option value="2">没有句子</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- 展开的详细信息 -->
+            <!-- Expanded Details -->
             <transition name="expand">
                 <div v-if="expandedWords[index]" class="details">
-                    <!-- 音标部分 -->
+                    <!-- Save Button -->
+                    <button
+                        class="save-btn"
+                        @click.stop="saveWord(word)"
+                        title="保存单词"
+                    >
+                        <span class="save-icon">💾</span>
+                    </button>
+                    <!-- Phonetic Section -->
                     <div class="phonetic">
                         <span class="label">音标:</span>
                         <span class="value">/{{ word.pronunciation }}/</span>
@@ -54,12 +65,12 @@
                         </button>
                     </div>
 
-                    <!-- 句中含义 -->
+                    <!-- Sentence Meaning -->
                     <div class="sentence-meaning">
                         {{ word.meaningInSentence }}
                     </div>
 
-                    <!-- 词性和词义部分 -->
+                    <!-- Word Meanings -->
                     <div class="meanings">
                         <div
                             v-for="(meaning, mIndex) in word.meanings"
@@ -80,56 +91,56 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watchEffect, watch } from "vue";
+import { WordVO } from "@/types/api.ts";
 
-const props = defineProps({
+const emit = defineEmits<{
+    (e: "saveWordInSentence", word: WordVO, contextType: string): void;
+    (e: "contextChange", word: WordVO, contextType: string): void;
+}>();
+
+const props = defineProps<{
     words: {
-        type: Array,
-        required: true,
-        validator: (value) => {
-            return value.every(
-                (word) =>
-                    word.hasOwnProperty("word") &&
-                    word.hasOwnProperty("pronunciation") &&
-                    word.hasOwnProperty("meaningInSentence") &&
-                    word.hasOwnProperty("meanings") &&
-                    Array.isArray(word.meanings) &&
-                    word.meanings.every(
-                        (item) =>
-                            item.hasOwnProperty("property") &&
-                            item.hasOwnProperty("meaning"),
-                    ),
-            );
-        },
-    },
-});
+        word: string;
+        pronunciation: string;
+        meaningInSentence: string;
+        meanings: Array<{
+            property: string;
+            meaning: string;
+        }>;
+        audioUrl?: string;
+        isWord: number;
+        contextType?: string; // New prop for context type
+    }[];
+}>();
 
 const expandedWords = ref({});
 const audio = ref(null);
 const previousLength = ref(0);
 
-// 使用 watch 监听数组的变化
+// Watch for array changes
 watch(
     () => props.words,
     (newWords) => {
         if (newWords?.length > 0) {
-            // 如果数组长度增加了，说明添加了新单词
             if (newWords.length > previousLength.value) {
-                // 设置新添加的单词为展开状态
                 expandedWords.value[newWords.length - 1] = true;
+                // Set default context type for new words
+                if (!newWords[newWords.length - 1].contextType) {
+                    newWords[newWords.length - 1].contextType = "1";
+                }
             }
-            // 更新前一次的长度
             previousLength.value = newWords.length;
         }
     },
     {
-        deep: true, // 深度监听数组变化
-        immediate: true, // 立即执行
+        deep: true,
+        immediate: true,
     },
 );
 
-// 管理音频资源
+// Manage audio resources
 watchEffect((onCleanup) => {
     if (audio.value) {
         onCleanup(() => {
@@ -145,7 +156,6 @@ const toggleExpand = (index) => {
 
 const playPronunciation = (url) => {
     if (!url) return;
-
     if (!audio.value) {
         audio.value = new Audio(url);
     } else {
@@ -154,30 +164,33 @@ const playPronunciation = (url) => {
     audio.value.play();
 };
 
-// 新增保存单词方法
-const saveWord = (word) => {};
+const saveWord = (word: WordVO) => {
+    const contextType = word.contextType || "1"; // 如果没有设置，默认使用 '1'
+    emit("saveWordInSentence", word, contextType);
+};
 
-// 新增保存所有单词的方法
+const handleContextChange = (word: WordVO, event: Event) => {
+    const target = event.target as HTMLSelectElement;
+    emit("contextChange", word, target.value);
+};
+
 const saveAllWords = () => {
     // emit("saveAllWords", props.words);
 };
 </script>
-
-<style scoped>
+<style class="scoped">
 .word-list {
     display: flex;
     flex-direction: column;
-    /* flex-wrap: wrap; */
     gap: 4px;
     padding: 4px;
-    height: 370px;
+    height: 330px;
     overflow-y: auto;
 }
 
 .word-tag-container {
     display: flex;
     flex-direction: column;
-    /* position: relative; */
     display: inline-block;
     margin: 4px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
@@ -197,7 +210,45 @@ const saveAllWords = () => {
     transition: all 0.3s;
     user-select: none;
 }
-/* 单词保存按钮样式 */
+
+/* 新增：下拉框容器样式 */
+.dropdown-container {
+    margin: 0 8px;
+    position: relative;
+}
+
+/* 新增：下拉框基础样式 */
+.context-dropdown {
+    padding: 2px 8px;
+    font-size: 12px;
+    border: 1px solid #91caff;
+    border-radius: 12px;
+    background-color: white;
+    color: #1677ff;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+/* 新增：下拉框悬停效果 */
+.context-dropdown:hover {
+    border-color: #69b1ff;
+    background-color: #f5f5f5;
+}
+
+/* 新增：下拉框焦点效果 */
+.context-dropdown:focus {
+    border-color: #1677ff;
+    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+}
+
+/* 新增：下拉框选项样式 */
+.context-dropdown option {
+    background-color: white;
+    color: #333;
+    padding: 8px;
+}
+
 .save-btn {
     background: none;
     border: none;
@@ -222,7 +273,6 @@ const saveAllWords = () => {
     font-size: 14px;
 }
 
-/** 新增保存所有按钮样式 */
 .save-all-container {
     padding: 8px 4px;
     border-bottom: 1px solid #e8e8e8;
@@ -252,6 +302,7 @@ const saveAllWords = () => {
 .save-all-btn .save-icon {
     font-size: 16px;
 }
+
 .tag:hover {
     background-color: #bae0ff;
     border-color: #69b1ff;
@@ -275,7 +326,6 @@ const saveAllWords = () => {
 }
 
 .details {
-    /* width: 190px; */
     padding: 12px;
     margin-top: -1px;
     background-color: white;
@@ -340,7 +390,6 @@ const saveAllWords = () => {
     color: #333;
 }
 
-/* 展开/收起动画 */
 .expand-enter-active,
 .expand-leave-active {
     transition: all 0.3s;

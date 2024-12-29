@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { Document, Menu as IconMenu, Setting } from "@element-plus/icons-vue";
 import WordTag from "../component/WordTag.vue";
 import MarkdownViewer from "../component/MarkDownViewer.vue";
 import SentenceInput from "../component/SentenceInput.vue";
 import { sentenceService } from "../service/sentence.js";
 import router from "../router/router.js";
-
+import { SaveSentenceDTO, ResultWithData, WordVO } from "@/types/api.ts";
 const isHovered = ref(false);
-const sentence = ref("");
-const selectedText = ref("");
-const explanation = ref("");
-const words = ref([]);
+const sentence = ref<string>("");
+const currentSentence = ref<SaveSentenceDTO>();
+const sentenceHistory = ref<SaveSentenceDTO[]>([]);
+const selectedText = ref<string>("");
+const explanation = ref<string>("");
+const words = ref<WordVO[]>([]);
 const isTranslating = ref(false);
 const isExplain = ref(false);
 
@@ -38,6 +39,7 @@ const handleTranslate = async (word: string) => {
     }
 };
 
+// 解释单词
 const handleTranslateByButton = async (word: string) => {
     if (!word || isTranslating.value) return;
 
@@ -47,11 +49,14 @@ const handleTranslateByButton = async (word: string) => {
             sentence.value,
             word,
         );
+        console.log("res:", res);
         words.value = [...words.value, res];
+        console.log("words:", words.value);
     } finally {
         isTranslating.value = false;
     }
 };
+// 解释句子
 const handleExplain = async () => {
     if (!sentence.value) return;
     isExplain.value = true;
@@ -83,6 +88,39 @@ const goToBook = () => {
     router.push("/book");
 };
 
+// 保存句子
+const saveSentence = async () => {
+    const saveSentenceDto: SaveSentenceDTO = {
+        sentence: sentence.value,
+        explanation: explanation.value,
+    };
+    const resultData: ResultWithData<SaveSentenceDTO> =
+        await sentenceService.saveSentence(saveSentenceDto);
+    console.log("resultData:", resultData);
+    const result = resultData.content;
+    const jsonReuslt: SaveSentenceDTO = JSON.parse(result);
+    console.log("jsonReuslt:", jsonReuslt);
+    currentSentence.value = jsonReuslt;
+    sentenceHistory.value = [...sentenceHistory.value, currentSentence.value];
+    console.log("saveSentence:", sentence);
+};
+
+// 保存单词中的句子
+const saveWordInSentence = async (word: WordVO, contextType: string) => {
+    let sentenceId: number;
+    console.log(contextType);
+    console.log(currentSentence.value);
+    if (
+        contextType == "1" &&
+        currentSentence.value &&
+        currentSentence.value.sentenceId
+    ) {
+        sentenceId = currentSentence.value.sentenceId;
+    }
+    sentenceService.saveWordInSentence(sentenceId, word);
+    console.log("saveWordInSentence:", word);
+};
+
 onMounted(() => {
     window.electronAPI.onTriggerFunction((params) => {
         console.log("Received params:", params);
@@ -103,6 +141,7 @@ onMounted(() => {
                 @translate="handleTranslateByButton"
                 @explain="handleExplain"
                 @clear="handleClear"
+                @save="saveSentence"
                 :isExplain="isExplain"
                 :isTranslating="isTranslating"
                 v-model:selectedText="selectedText"
@@ -130,7 +169,10 @@ onMounted(() => {
                     <div class="content-section right-section">
                         <template v-if="words.length > 0">
                             <div class="content-panel words-section">
-                                <WordTag :words="words" />
+                                <WordTag
+                                    @saveWordInSentence="saveWordInSentence"
+                                    :words="words"
+                                />
                             </div>
                         </template>
                         <div v-else class="empty-state">暂无词汇内容</div>
@@ -158,7 +200,7 @@ onMounted(() => {
     --transition-base: all 0.3s ease;
 
     /* 移除max-width、max-height和overflow限制，让布局更灵活 */
-    height: 100vh;
+    /* height: 100vh; */
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -174,6 +216,8 @@ onMounted(() => {
     flex: 1; /* 主内容区可弹性伸展 */
     /* padding: var(--spacing-base); */
     box-sizing: border-box;
+    overflow: hidden;
+    padding: 0px;
 }
 
 :deep(.sentence-input-container) {
@@ -193,6 +237,7 @@ onMounted(() => {
 
 .analysis-area {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--spacing-base);
     flex: 1;
     min-height: 0;
@@ -203,6 +248,7 @@ onMounted(() => {
 
 .content-section {
     display: flex;
+
     flex-direction: column;
     transition: var(--transition-base);
     flex: 1;
@@ -268,7 +314,6 @@ onMounted(() => {
 
 @media screen and (max-width: 800px) {
     .main-content {
-        padding: calc(var(--spacing-base) / 2);
     }
 
     .analysis-area {

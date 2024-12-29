@@ -40,7 +40,7 @@
                     </div>
                     <div class="analysis-section">
                         <!-- <h3 class="analysis-title">翻333译</h3> -->
-                         <span class="chinese-text">翻译：</span>
+                        <span class="chinese-text">翻译：</span>
                         <p
                             class="chinese-text"
                             @mouseup="handleSelection"
@@ -61,7 +61,7 @@
                     </div>
                     <div class="analysis-section">
                         <!-- <h3 class="analysis-title">Notes</h3> -->
-                         <span class="notes-text">含义</span>
+                        <span class="notes-text">含义</span>
                         <p
                             class="notes-text"
                             @mouseup="handleSelection"
@@ -94,7 +94,7 @@ export default {
         showToolbar: { type: Boolean, default: true },
         autoDetectLanguage: { type: Boolean, default: true },
         width: { type: [String, Number], default: "100%" },
-        height: { type: [String, Number], default: "370px" },
+        height: { type: [String, Number], default: "330px" },
     },
 
     emits: ["word-select", "word-dbclick"],
@@ -276,7 +276,7 @@ export default {
 .markdown-content-wrapper {
     flex: 1;
     overflow-y: auto;
-    background-color: white; 
+    background-color: white;
 }
 
 .markdown-content-wrapper.dark-mode {
@@ -300,7 +300,6 @@ export default {
 
 .analysis-section {
     margin-bottom: 0.5rem;
-    
 }
 
 .analysis-section:last-child {

@@ -44,6 +44,7 @@ const emit = defineEmits([
     "search",
     "explain",
     "clear",
+    "save",
 ]);
 
 const inputValue = ref(props.modelValue);
@@ -127,7 +128,8 @@ const setSelectedText = (text: string) => {
 // 保存段落
 // 添加保存段落的处理函数
 const handleSave = () => {
-    // if (!inputValue.value) return;
+    if (!inputValue.value) return;
+    emit("save", inputValue.value);
 };
 defineExpose({
     getSelectedText: () => localSelectedText.value,

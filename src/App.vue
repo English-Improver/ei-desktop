@@ -1,234 +1,221 @@
 <template>
     <div id="app" class="app-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <!-- 可选添加一个简化的toggle区域，类似一条细线 -->
-            <div class="sidebar-toggle"></div>
-            <el-menu class="nav-menu" :collapse="false">
-                <div class="menu-header">
-                    <h3>Menu</h3>
+        <!-- Top Navigation Bar -->
+        <nav class="top-nav">
+            <div class="nav-content">
+                <!-- Logo/Brand Area -->
+                <div class="brand">
+                    <span class="logo">📚</span>
+                    <span class="brand-name">Reader</span>
                 </div>
-                <el-menu-item index="1" @click="goToHome">
-                    <el-icon><Document /></el-icon>
-                    <span>Text Analysis</span>
-                </el-menu-item>
-                <el-menu-item index="2" @click="goToBook">
-                    <el-icon><IconMenu /></el-icon>
-                    <span>Books</span>
-                </el-menu-item>
-                <el-menu-item index="3">
-                    <el-icon><Setting /></el-icon>
-                    <span>Settings</span>
-                </el-menu-item>
-            </el-menu>
-        </div>
+
+                <!-- Menu Items -->
+                <div class="nav-menu">
+                    <div
+                        class="nav-item"
+                        :class="{ active: currentRoute === '/' }"
+                        @click="goToHome"
+                    >
+                        <span class="icon">📄</span>
+                        <span>Text Analysis</span>
+                    </div>
+                    <div
+                        class="nav-item"
+                        :class="{ active: currentRoute === '/book' }"
+                        @click="goToBook"
+                    >
+                        <span class="icon">📚</span>
+                        <span>Books</span>
+                    </div>
+                    <div class="nav-item">
+                        <span class="icon">⚙️</span>
+                        <span>Settings</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
 
         <!-- Main Content -->
-        <div class="main-view">
+        <div class="main-content">
             <RouterView />
         </div>
     </div>
 </template>
 
 <script setup>
-import { onMounted } from "vue";
-import { Document, Menu as IconMenu, Setting } from "@element-plus/icons-vue";
+import { ref, onMounted, watch } from "vue";
+import { useRoute } from "vue-router";
 import router from "./router/router.js";
 
-onMounted(() => {
-    console.log("App component mounted");
-});
+const route = useRoute();
+const currentRoute = ref(route.path);
+
+// Watch for route changes
+watch(
+    () => route.path,
+    (newPath) => {
+        currentRoute.value = newPath;
+    },
+);
 
 const goToHome = () => {
-    console.log("Navigating to home");
     router.push("/");
 };
 
 const goToBook = () => {
-    console.log("Navigating to book");
     router.push("/book");
 };
 </script>
 
 <style scoped>
 .app-container {
-    --menu-width: 180px; /* 菜单展开时的宽度 */
-    --trigger-width: 4px; /* 折叠时的触发区域非常窄，让用户靠近左侧才触发 */
-    --primary-color: #409eff;
+    --primary-color: #4a9eff;
     --border-color: #e4e7ed;
     --bg-color: #f5f7fa;
     --text-primary: #303133;
     --text-secondary: #606266;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --transition-speed: 0.25s;
+    --nav-height: 48px;
 
     width: 100%;
     height: 100vh;
     background-color: var(--bg-color);
-    position: relative;
-    margin: 0;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Sidebar */
-.sidebar {
+/* Top Navigation Bar */
+.top-nav {
+    height: var(--nav-height);
+    background-color: #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     position: fixed;
-    left: 0;
     top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.nav-content {
+    max-width: 1200px;
     height: 100%;
-    z-index: 2000;
-    width: var(--trigger-width); /* 初始仅为4px的细条 */
-    background-color: rgba(255, 255, 255, 0.5);
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    transition: width var(--transition-speed) ease;
-    /* 可选添加毛玻璃效果，让主内容在菜单显示时依然微透可见 */
-    backdrop-filter: blur(8px);
-}
-
-/* 鼠标接近左侧4px时才展开菜单 */
-.sidebar:hover {
-    width: var(--menu-width);
-}
-
-.sidebar-toggle {
-    width: var(--trigger-width);
-    height: 100%;
-    position: relative;
-    cursor: pointer;
-    background-color: rgba(0, 0, 0, 0.03);
-    transition: background-color var(--transition-speed) ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.sidebar-toggle::after {
-    content: "";
-    width: 2px;
-    height: 24px;
-    background-color: var(--primary-color);
-    border-radius: 1px;
-    opacity: 0.5;
-    transition: opacity var(--transition-speed) ease;
-}
-
-.sidebar-toggle:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-}
-
-.sidebar-toggle:hover::after {
-    opacity: 1;
-}
-
-.nav-menu {
-    height: 100%;
-    border: none;
-    background: #fff;
-    box-shadow: var(--shadow-sm);
-    transform: translateX(
-        calc(-1 * (var(--menu-width) - var(--trigger-width)))
-    );
-    transition: transform var(--transition-speed) ease;
-}
-
-.sidebar:hover .nav-menu {
-    transform: translateX(0);
-}
-
-.menu-header {
-    height: 48px;
-    display: flex;
-    align-items: center;
+    margin: 0 auto;
     padding: 0 16px;
-    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 32px;
 }
 
-.menu-header h3 {
-    margin: 0;
-    font-size: 16px;
-    color: var(--text-primary);
+/* Brand/Logo Area */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.2rem;
     font-weight: 500;
+    color: var(--primary-color);
+    padding-right: 32px;
+    border-right: 1px solid var(--border-color);
+}
+
+.logo {
+    font-size: 1.4rem;
 }
 
 /* Menu Items */
-.nav-menu >>> .el-menu-item {
-    height: 40px;
-    line-height: 40px;
-    padding: 0 16px !important;
-    font-size: 0.875rem;
+.nav-menu {
     display: flex;
     align-items: center;
-    transition:
-        background-color var(--transition-speed) ease,
-        color var(--transition-speed) ease;
-}
-
-.nav-menu >>> .el-menu-item.is-active {
-    background-color: var(--primary-color);
-    color: #fff;
-}
-
-.nav-menu >>> .el-menu-item:not(.is-active):hover {
-    background-color: var(--bg-color);
-    color: var(--text-primary);
-}
-
-/* 主内容区：占满剩余空间 */
-.main-view {
-    width: 100%;
+    gap: 8px;
     height: 100%;
-    overflow: hidden;
-    box-sizing: border-box;
 }
 
-/* 响应式设计 */
+.nav-item {
+    height: 100%;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.nav-item::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--primary-color);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+}
+
+.nav-item:hover {
+    color: var(--primary-color);
+    background-color: rgba(74, 158, 255, 0.05);
+}
+
+.nav-item.active {
+    color: var(--primary-color);
+}
+
+.nav-item.active::after {
+    transform: scaleX(1);
+}
+
+.nav-item .icon {
+    font-size: 16px;
+}
+
+/* Main Content Area */
+.main-content {
+    margin-top: var(--nav-height);
+    flex: 1;
+    overflow: auto;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-    .app-container {
-        --menu-width: 160px;
-        --trigger-width: 4px; /* 在小屏幕下仍保持很窄的触发区域 */
+    .nav-content {
+        padding: 0 8px;
+        gap: 16px;
     }
 
-    .menu-header {
-        height: 40px;
+    .brand {
+        padding-right: 16px;
+    }
+
+    .brand-name {
+        display: none; /* Hide brand name on mobile */
+    }
+
+    .nav-item {
         padding: 0 12px;
     }
 
-    .menu-header h3 {
+    .nav-item .icon {
         font-size: 14px;
-    }
-
-    .nav-menu >>> .el-menu-item {
-        height: 36px;
-        line-height: 36px;
-        padding: 0 12px !important;
-        font-size: 13px;
     }
 }
 
-/* 深色模式支持 */
+/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
+    .top-nav {
+        background-color: #1f1f1f;
+    }
+
+    .nav-item:hover {
+        background-color: rgba(74, 158, 255, 0.1);
+    }
+
     .app-container {
         --bg-color: #141414;
         --text-primary: #ffffff;
         --text-secondary: #cccccc;
         --border-color: #333333;
-    }
-
-    .nav-menu {
-        background: #1f1f1f;
-    }
-
-    .sidebar-toggle {
-        background-color: rgba(255, 255, 255, 0.03);
-    }
-
-    .sidebar-toggle:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-    }
-
-    .nav-menu >>> .el-menu-item:not(.is-active):hover {
-        background-color: #2a2a2a;
     }
 }
 </style>
