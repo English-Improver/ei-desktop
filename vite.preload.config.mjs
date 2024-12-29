@@ -1,18 +1,18 @@
 import { defineConfig } from "vite";
 import path from "path";
 
-// https://vitejs.dev/config
 export default defineConfig({
   resolve: {
-    // 避免 Vite 试图打包 Electron
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
   build: {
-    rollupOptions: {
-      external: ["electron"],
-    },
     ssr: true,
+    outDir: ".vite/build/preload", // 预加载脚本文件的输出目录
+    rollupOptions: {
+      input: path.resolve(__dirname, "src/preload.js"), // 预加载脚本入口
+      external: ["electron", "express"], // 避免将 Electron 模块打包进预加载脚本
+    },
   },
 });

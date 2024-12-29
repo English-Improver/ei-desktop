@@ -1,14 +1,16 @@
+const path = require("path");
+
 module.exports = {
-  packagerConfig: {},
+  packagerConfig: {
+    asar: true,
+  },
   rebuildConfig: {},
   makers: [
     {
-      name: "@electron-forge/maker-squirrel",
-      config: {},
+      name: "@electron-forge/maker-zip",
     },
     {
-      name: "@electron-forge/maker-zip",
-      platforms: ["darwin"],
+      name: "@electron-forge/maker-dmg",
     },
   ],
   plugins: [
@@ -34,4 +36,5 @@ module.exports = {
       },
     },
   ],
+  externals: ["express", "body-parser"],
 };
