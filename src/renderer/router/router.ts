@@ -1,8 +1,8 @@
-import { createRouter, createWebHashHistory } from "vue-router";
+import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import SentenceAnalyze from "../view/SentenceAnalyze.vue";
 import WordsBook from "../view/WordsBook.vue";
 
-const routes = [
+const routes: RouteRecordRaw[] = [
   {
     path: "/",
     component: SentenceAnalyze,
@@ -10,7 +10,7 @@ const routes = [
   {
     path: "/book",
     component: WordsBook,
-  },
+},
 ];
 
 const router = createRouter({

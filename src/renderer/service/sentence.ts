@@ -1,15 +1,15 @@
-import { api } from "../api/axios";
+import { api } from "../api/axios.js";
 import { SaveSentenceDTO, WordVO } from "@/types/api.ts";
 
 /**
  * 解释
  */
 export const sentenceService = {
-  explain(sentence) {
+  explain(sentence: string) {
     return api.post("/sentence/explain", { sentence });
   },
   // 解释句子中的单词
-  explainWordInSentence(sentence0, word0) {
+  explainWordInSentence(sentence0: string, word0: string) {
     const wordDto = {
       word: word0,
       belongSentence: sentence0,
@@ -17,7 +17,7 @@ export const sentenceService = {
     return api.post("/sentence/explainWordInSentence", wordDto);
   },
 
-  getSelectedWords(sentence) {
+  getSelectedWords(sentence: string) {
     return api.post("/sentence/getSelectedWords", { sentence });
   },
   saveSentence(sentence: SaveSentenceDTO) {

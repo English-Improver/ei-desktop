@@ -29,8 +29,8 @@
 </template>
 
 <script>
-import WordList from "../component/WordList.vue";
-import WordDetail from "../component/WordDetail.vue";
+import WordList from "../components/WordList.vue";
+import WordDetail from "../components/WordDetail.vue";
 
 export default {
     name: "WordsBoook",

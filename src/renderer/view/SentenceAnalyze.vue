@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import WordTag from "../component/WordTag.vue";
-import MarkdownViewer from "../component/MarkDownViewer.vue";
-import SentenceInput from "../component/SentenceInput.vue";
+import WordTag from "../components/WordTag.vue";
+import MarkdownViewer from "../components/MarkDownViewer.vue";
+import SentenceInput from "../components/SentenceInput.vue";
 import { sentenceService } from "../service/sentence.js";
-import router from "../router/router.js";
+import router from "../router/router";
 import { SaveSentenceDTO, ResultWithData, WordVO } from "@/types/api.ts";
 const isHovered = ref(false);
 const sentence = ref<string>("");
