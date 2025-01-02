@@ -8,3 +8,8 @@
 # TODO
 1. 保存段落
 2. 保存单词
+
+
+
+# thanks
+https://github.com/Deluze/electron-vue-template

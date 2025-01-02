@@ -1,7 +1,9 @@
 {
-  "name": "electron-vue-template",
+  "name": "english-improver",
   "version": "0.1.0",
-  "description": "A minimal Electron + Vue application",
+  "description": "English learning app",
+  "productName": "English Improver",
+  "private": true,
   "main": "main/main.js",
   "scripts": {
     "dev": "node scripts/dev-server.js",
@@ -12,8 +14,8 @@
   },
   "repository": "https://github.com/deluze/electron-vue-template",
   "author": {
-    "name": "Deluze",
-    "url": "https://github.com/Deluze"
+    "name": "Logan",
+    "url": "https://github.com/English-Improver/ei-desktop"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.4.1",
