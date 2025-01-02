@@ -178,23 +178,18 @@ const saveAllWords = () => {
     // emit("saveAllWords", props.words);
 };
 </script>
-<style class="scoped">
+<style scoped>
 .word-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 4px;
-    height: 330px;
+    gap: 8px;
+    height: 100%;
     overflow-y: auto;
+    padding-right: 8px;
 }
 
 .word-tag-container {
-    display: flex;
-    flex-direction: column;
-    display: inline-block;
-    margin: 4px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    flex-shrink: 0;
 }
 
 .tag {

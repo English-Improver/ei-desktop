@@ -94,7 +94,7 @@ export default {
         showToolbar: { type: Boolean, default: true },
         autoDetectLanguage: { type: Boolean, default: true },
         width: { type: [String, Number], default: "100%" },
-        height: { type: [String, Number], default: "330px" },
+        height: { type: [String, Number], default: "350px" },
     },
 
     emits: ["word-select", "word-dbclick"],
@@ -247,6 +247,7 @@ export default {
     overflow: hidden;
     /* background-color: white; */
     font-size: 14px;
+    height: 100%;
 }
 
 .toolbar {
@@ -299,7 +300,7 @@ export default {
 }
 
 .analysis-section {
-    margin-bottom: 0.5rem;
+    /* margin-bottom: 0.5rem; */
 }
 
 .analysis-section:last-child {

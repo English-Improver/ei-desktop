@@ -74,7 +74,7 @@ const goToBook = () => {
   --bg-color: #f5f7fa;
   --text-primary: #303133;
   --text-secondary: #606266;
-  --nav-height: 48px;
+  --nav-height: 40px;
 
   width: 100%;
   height: 100vh;
@@ -86,8 +86,9 @@ const goToBook = () => {
 /* Top Navigation Bar */
 .top-nav {
   height: var(--nav-height);
-  background-color: #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   position: fixed;
   top: 0;
   left: 0;
@@ -155,7 +156,7 @@ const goToBook = () => {
 
 .nav-item:hover {
   color: var(--primary-color);
-  background-color: rgba(74, 158, 255, 0.05);
+  background-color: #eee9e1;
 }
 
 .nav-item.active {
@@ -173,8 +174,9 @@ const goToBook = () => {
 /* Main Content Area */
 .main-content {
   margin-top: var(--nav-height);
-  flex: 1;
-  overflow: auto;
+  margin-right: 8px;
+  height: calc(100vh - var(--nav-height));
+  overflow: hidden;
 }
 
 /* Responsive Design */

@@ -7,7 +7,7 @@ export class HttpServer {
   private server: any;
   private mainWindow: BrowserWindow;
 
-  constructor(mainWindow: BrowserWindow, port: number = 3000) {
+  constructor(mainWindow: BrowserWindow, port: number = 24678) {
     this.mainWindow = mainWindow;
     this.app = express();
     

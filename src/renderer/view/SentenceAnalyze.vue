@@ -1,20 +1,186 @@
+
+<template>
+    <div class="page-container">
+        <Notification ref="notificationRef" />
+        <div class="main-content">
+            <div class="content-wrapper">
+                <!-- 输入区域 -->
+                <SentenceInput
+                    v-model="sentence"
+                    :rows="7"
+                    placeholder="请输入或粘贴文本..."
+                    @translate="handleTranslateByButton"
+                    @explain="handleExplainComman"
+                    @clear="handleClear"
+                    @save="saveSentence"
+                    :isExplain="isExplain"
+                    :isTranslating="isTranslating"
+                    :isSaving="isSaving"
+                    :isSaved="isSentenceSaved()"
+                    v-model:selectedText="selectedText"
+                />
+
+                <!-- 解释内容区域 -->
+                <div class="analysis-container">
+                    <div class="analysis-area">
+                        <!-- 句子解释面板 (70%) -->
+                        <div class="sentence-explanation">
+                            <div class="content-panel">
+                                <div class="panel-content">
+                                    <template v-if="explanation">
+                                        <MarkdownViewer
+                                            :content="explanation"
+                                            :showToolbar="false"
+                                            @word-dbclick="handleSelectWord"
+                                            @word-select="handleSelectWord"
+                                        />
+                                    </template>
+                                    <div v-else class="empty-state">
+                                        暂无解释
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 单词解释面板 (30%) -->
+                        <div class="word-explanation">
+                            <div class="content-panel">
+                                <div class="panel-content">
+                                    <template v-if="words.length > 0">
+                                        <WordTag
+                                            @saveWordInSentence="saveWordInSentence"
+                                            :words="words"
+                                        />
+                                    </template>
+                                    <div v-else class="empty-state">暂无词汇内容</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史记录按钮 -->
+            <button 
+                class="history-toggle" 
+                :class="{ active: showHistory }"
+                @click="toggleHistory"
+                :title="showHistory ? '隐藏历史记录' : '显示历史记录'"
+            >
+                {{ showHistory ? '隐藏历史' : '显示历史' }}
+            </button>
+
+            <!-- 历史记录面板 -->
+            <div 
+                class="history-panel"
+                :class="{ 'history-panel--visible': showHistory }"
+            >
+                <HistoryTabs
+                    :sentences="sentenceHistory"
+                    :words="savedWords"
+                    @reloadSentence="reloadHistorySentence"
+                />
+            </div>
+        </div>
+    </div>
+</template>
+
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import WordTag from "../components/WordTag.vue";
 import MarkdownViewer from "../components/MarkDownViewer.vue";
 import SentenceInput from "../components/SentenceInput.vue";
-import { sentenceService } from "../service/sentence.js";
+import Notification from "../components/Notification.vue";
+import HistoryTabs from "../components/HistoryTabs.vue";
+import { localStorageService } from "../service/localStorageService";
 import router from "../router/router";
 import { SaveSentenceDTO, ResultWithData, WordVO } from "@/types/api.ts";
-const isHovered = ref(false);
-const sentence = ref<string>("");
-const currentSentence = ref<SaveSentenceDTO>();
-const sentenceHistory = ref<SaveSentenceDTO[]>([]);
-const selectedText = ref<string>("");
-const explanation = ref<string>("");
+import { sentenceService } from "../service/sentence";
+
+const notificationRef = ref();
+const sentence = ref("");
+const explanation = ref("");
 const words = ref<WordVO[]>([]);
-const isTranslating = ref(false);
+const selectedText = ref("");
 const isExplain = ref(false);
+const isTranslating = ref(false);
+const isSaving = ref(false);
+const showHistory = ref(false);
+const sentenceHistory = ref<SaveSentenceDTO[]>([]);
+const savedWords = ref<WordVO[]>([]);
+
+// 加载历史数据
+const loadHistory = async () => {
+    try {
+        sentenceHistory.value = localStorageService.getSentences();
+        savedWords.value = localStorageService.getWords();
+    } catch (error) {
+        console.error('Load history failed:', error);
+        notificationRef.value?.show('加载历史记录失败', 'error');
+    }
+};
+
+// 切换历史面板
+function toggleHistory() {
+    showHistory.value = !showHistory.value;
+    if (showHistory.value) {
+        loadHistory();
+    }
+}
+
+// 重新加载历史句子
+async function reloadHistorySentence(historySentence: SaveSentenceDTO) {
+    sentence.value = historySentence.sentence;
+    explanation.value = historySentence.explanation;
+    words.value = historySentence.words || [];
+    showHistory.value = false;
+    notificationRef.value?.show('已加载历史句子', 'success');
+}
+
+// 保存句子
+async function saveSentence() {
+    if (!sentence.value || !explanation.value || isSaving.value) return;
+
+    isSaving.value = true;
+    try {
+        const savedSentence = localStorageService.saveSentence({
+            sentence: sentence.value,
+            explanation: explanation.value,
+        });
+        notificationRef.value?.show('保存成功', 'success');
+        // Reload history if panel is visible
+        if (showHistory.value) {
+            loadHistory();
+        }
+    } catch (error) {
+        console.error('Save sentence failed:', error);
+        notificationRef.value?.show('保存失败', 'error');
+    } finally {
+        isSaving.value = false;
+    }
+}
+
+// 保存单词
+async function saveWordInSentence(word: WordVO, contextType: string) {
+    try {
+        const currentSentence = localStorageService.getSentences().find(s => s.sentence === sentence.value);
+        if (!currentSentence) {
+            notificationRef.value?.show('请先保存句子', 'error');
+            return;
+        }
+        
+        localStorageService.saveWord(word, currentSentence.sentenceId);
+        notificationRef.value?.show('单词保存成功', 'success');
+        
+        // 更新历史记录中的单词列表
+        if (showHistory.value) {
+            savedWords.value = localStorageService.getWords();
+        }
+    } catch (error) {
+        console.error('Save word failed:', error);
+        notificationRef.value?.show('保存失败', 'error');
+    }
+}
 
 const handleMouseEnter = () => {
     isHovered.value = true;
@@ -23,6 +189,7 @@ const handleMouseEnter = () => {
 const handleMouseLeave = () => {
     isHovered.value = false;
 };
+
 // for API call by http requet
 const handleTranslate = async (word: string) => {
     if (!word || isTranslating.value) return;
@@ -45,19 +212,31 @@ const handleTranslateByButton = async (word: string) => {
 
     isTranslating.value = true;
     try {
-        const res = await sentenceService.explainWordInSentence(
+        const res = await window.electronAPI.explainWordInSentence(
             sentence.value,
             word,
         );
-        console.log("res:", res);
         words.value = [...words.value, res];
-        console.log("words:", words.value);
     } finally {
         isTranslating.value = false;
     }
 };
+
 // 解释句子
 const handleExplain = async () => {
+    if (!sentence.value) return;
+    isExplain.value = true;
+    try {
+        const res = await window.electronAPI.explain(sentence.value);
+        explanation.value = res;
+    } catch (e) {
+        console.error(e);
+    } finally {
+        isExplain.value = false;
+    }
+};
+
+const handleExplainComman = async () => {
     if (!sentence.value) return;
     isExplain.value = true;
     try {
@@ -69,7 +248,6 @@ const handleExplain = async () => {
         isExplain.value = false;
     }
 };
-
 const handleClear = () => {
     sentence.value = "";
     explanation.value = "";
@@ -84,41 +262,20 @@ const goToHome = () => {
     console.log("trigger");
     router.push("/");
 };
+
 const goToBook = () => {
     router.push("/book");
 };
 
-// 保存句子
-const saveSentence = async () => {
-    const saveSentenceDto: SaveSentenceDTO = {
-        sentence: sentence.value,
-        explanation: explanation.value,
-    };
-    const resultData: ResultWithData<SaveSentenceDTO> =
-        await sentenceService.saveSentence(saveSentenceDto);
-    console.log("resultData:", resultData);
-    const result = resultData.content;
-    const jsonReuslt: SaveSentenceDTO = JSON.parse(result);
-    console.log("jsonReuslt:", jsonReuslt);
-    currentSentence.value = jsonReuslt;
-    sentenceHistory.value = [...sentenceHistory.value, currentSentence.value];
-    console.log("saveSentence:", sentence);
-};
-
-// 保存单词中的句子
-const saveWordInSentence = async (word: WordVO, contextType: string) => {
-    let sentenceId: number;
-    console.log(contextType);
-    console.log(currentSentence.value);
-    if (
-        contextType == "1" &&
-        currentSentence.value &&
-        currentSentence.value.sentenceId
-    ) {
-        sentenceId = currentSentence.value.sentenceId;
-    }
-    sentenceService.saveWordInSentence(sentenceId, word);
-    console.log("saveWordInSentence:", word);
+// 检查句子是否已保存
+const isSentenceSaved = () => {
+    if (!sentence.value || !explanation.value) return false;
+    
+    return sentenceHistory.value.some(
+        (item) => 
+            item.sentence === sentence.value && 
+            item.explanation === explanation.value
+    );
 };
 
 onMounted(() => {
@@ -130,211 +287,177 @@ onMounted(() => {
 });
 </script>
 
-<template>
-    <div class="page-container">
-        <div class="main-content">
-            <!-- 输入区域 -->
-            <SentenceInput
-                v-model="sentence"
-                :rows="3"
-                placeholder="请输入或粘贴文本..."
-                @translate="handleTranslateByButton"
-                @explain="handleExplain"
-                @clear="handleClear"
-                @save="saveSentence"
-                :isExplain="isExplain"
-                :isTranslating="isTranslating"
-                v-model:selectedText="selectedText"
-            />
-
-            <!-- 解释内容区域 -->
-            <div class="analysis-container">
-                <div class="analysis-area">
-                    <div class="content-section left-section">
-                        <template v-if="explanation">
-                            <div class="content-panel explanation-section">
-                                <MarkdownViewer
-                                    :content="explanation"
-                                    :showToolbar="false"
-                                    @word-dbclick="handleSelectWord"
-                                    @word-select="handleSelectWord"
-                                />
-                            </div>
-                        </template>
-                        <div v-if="!explanation" class="empty-state">
-                            暂无解释
-                        </div>
-                    </div>
-
-                    <div class="content-section right-section">
-                        <template v-if="words.length > 0">
-                            <div class="content-panel words-section">
-                                <WordTag
-                                    @saveWordInSentence="saveWordInSentence"
-                                    :words="words"
-                                />
-                            </div>
-                        </template>
-                        <div v-else class="empty-state">暂无词汇内容</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
 <style scoped>
 .page-container {
-    --primary-color: #409eff;
-    --bg-color: #fafafa;
-    --panel-bg: #ffffff;
-    --border-color: #e4e7ed;
-    --text-primary: #303133;
-    --text-secondary: #606266;
-    --text-tertiary: #909399;
-    --empty-bg: #f8f9fa;
-    --spacing-base: 12px;
-    --border-radius: 8px;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.08);
-    --transition-base: all 0.3s ease;
-
-    /* 移除max-width、max-height和overflow限制，让布局更灵活 */
-    /* height: 100vh; */
+    height: 100vh;
     width: 100%;
     display: flex;
     flex-direction: column;
-    background-color: var(--color-background);
-    box-sizing: border-box;
-    /* 允许页面必要时滚动显示完整内容 */
-    overflow: auto;
+    background-color: var(--color-bg-primary);
 }
 
 .main-content {
+    flex: 1;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    flex: 1; /* 主内容区可弹性伸展 */
-    /* padding: var(--spacing-base); */
-    box-sizing: border-box;
-    overflow: hidden;
-    padding: 0px;
+    background-color: var(--color-bg-primary);
 }
 
-:deep(.sentence-input-container) {
-    /* 保持输入区域紧凑，但不要固定死最大高度，让其根据内容或行数变化 */
-    min-height: 120px;
-    max-height: 180px;
-    overflow: auto;
+.content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .analysis-container {
     flex: 1;
     display: flex;
-    flex-direction: row;
-    /* 使用flex:1并保持min-height:0以确保在小窗口时可正确滚动 */
-    min-height: 0;
+    flex-direction: column;
 }
 
 .analysis-area {
+    width: 98%;
+    height: 80%;
+    padding: 0 12px;
+    margin-right: 8px;
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-base);
-    flex: 1;
-    min-height: 0;
-    /* 允许在内容过多时水平或垂直滚动 */
-    overflow: auto;
-    box-sizing: border-box;
+    flex-direction: row;
+    gap: var(--space-4);
+    background-color: var(--color-bg-primary);
+    overflow: hidden;
 }
 
-.content-section {
-    display: flex;
-
-    flex-direction: column;
-    transition: var(--transition-base);
-    flex: 1;
-    min-width: 0;
-
-    /* 使用min-width:0确保flex子项在有滚动需求时正确缩小 */
+/* 句子解释面板 (70%) */
+.sentence-explanation {
+    flex: 7;
+    height: 100%;
+    overflow: hidden;
 }
 
-.left-section {
-    flex: 2;
-    min-width: 0;
-    background-color: var(--color-background);
-}
-
-.right-section {
-    /* width: 260px; */
-    flex-shrink: 0;
-    min-width: 0;
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    background-color: var(--color-background);
+/* 单词解释面板 (30%) */
+.word-explanation {
+    flex: 3;
+    height: 100%;
+    overflow: hidden;
 }
 
 .content-panel {
-    flex: 1;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-bg-panel);
     display: flex;
     flex-direction: column;
-    padding: calc(var(--spacing-base) * 0.75);
-    overflow: auto; /* 若内容过多则滚动 */
-    background: var(--panel-bg);
-    box-sizing: border-box;
+    overflow: hidden;
 }
 
-.explanation-section,
-.words-section {
-    color: var(--text-primary);
-    font-size: 14px;
-    line-height: 1.5;
-    /* 滚动条优化可保留，也可进一步定制 */
-    scrollbar-width: thin;
-    scrollbar-color: var(--text-tertiary) transparent;
-    /* 在需要时可增加padding */
-    padding-bottom: var(--spacing-base);
-    margin: calc(var(--spacing-base) / 2);
-    border: 1px dashed var(--border-color);
-    border-radius: calc(var(--border-radius) - 2px);
+.panel-content {
+    flex: 1;
+    padding: var(--space-2);
+    overflow-y: hidden;
+}
+
+/* 为句子解释面板的内容添加滚动 */
+.sentence-explanation .panel-content {
+    overflow-y: hidden;
+}
+
+/* 为词汇解释面板的内容添加滚动 */
+.word-explanation .panel-content {
+    overflow-y: auto;
 }
 
 .empty-state {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-tertiary);
-    font-size: 13px;
-    border: 1px dashed var(--border-color);
-    background-color: var(--color-background);
-    border-radius: calc(var(--border-radius) - 2px);
-    margin: calc(var(--spacing-base) / 2);
-    padding: calc(var(--spacing-base) * 0.75);
+    height: 100%;
+    color: var(--color-text-light);
 }
 
+:deep(.sentence-input-container) {
+    margin-bottom: var(--space-4);
+}
+
+/* 历史记录按钮 */
+.history-toggle {
+    position: fixed;
+    right: v-bind(showHistory ? '300px' : '0');
+    top: 50%;
+    transform: translateY(-50%);
+    writing-mode: vertical-rl;
+    padding: 12px 6px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px 0 0 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 101;
+}
+
+.history-toggle:hover {
+    background: var(--primary-color-dark);
+}
+
+.history-toggle.active {
+    background: var(--text-secondary);
+}
+
+/* 历史记录面板 */
+.history-panel {
+    position: fixed;
+    top: var(--header-height);
+    right: 0;
+    width: 300px;
+    height: calc(100vh - var(--header-height));
+    background: var(--color-bg-secondary);
+    border-left: 1px solid var(--color-border);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.history-panel--visible {
+    transform: translateX(0);
+}
+
+/* 响应式设计 */
 @media screen and (max-width: 800px) {
     .main-content {
+        padding-right: 20px;
+    }
+
+    .history-panel {
+        width: 100%;
+    }
+
+    .history-toggle {
+        right: v-bind(showHistory ? '100%' : '0');
     }
 
     .analysis-area {
-        flex-direction: row;
+        flex-direction: column;
     }
 
-    .right-section {
+    .sentence-explanation,
+    .word-explanation {
+        flex: none;
         width: 100%;
-        /* height: 200px; */
     }
 }
 
-@media (prefers-color-scheme: dark) {
-    .page-container {
-        --bg-color: #141414;
-        --panel-bg: #1f1f1f;
-        --border-color: #333333;
-        --text-primary: #ffffff;
-        --text-secondary: #cccccc;
-        --text-tertiary: #999999;
-        --empty-bg: #1a1a1a;
+@media screen and (max-width: 500px) {
+    .analysis-area {
+        flex-direction: column;
+    }
+
+    .sentence-explanation,
+    .word-explanation {
+        flex: none;
+        width: 100%;
     }
 }
 </style>
