@@ -212,7 +212,7 @@ const handleTranslateByButton = async (word: string) => {
 
     isTranslating.value = true;
     try {
-        const res = await window.electronAPI.explainWordInSentence(
+        const res = await sentenceService.explainWordInSentence(
             sentence.value,
             word,
         );
