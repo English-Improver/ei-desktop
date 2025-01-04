@@ -3,6 +3,30 @@ import {join} from 'path';
 import { HttpServer } from './http-server';
 
 let httpServer: HttpServer | null = null;
+let mainWindow: BrowserWindow | null = null;
+
+// 确保应用程序只有一个实例在运行
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    // 当运行第二个实例时，将焦点放在主窗口上
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  // 注册自定义协议
+  if (!app.isDefaultProtocolClient('ei-desktop')) {
+    app.setAsDefaultProtocolClient('ei-desktop');
+  }
+}
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
@@ -25,12 +49,10 @@ function createWindow () {
   }
 
   // Initialize HTTP server
-  httpServer = new HttpServer(mainWindow);
+  httpServer = new HttpServer(mainWindow, app);
 
   return mainWindow;
 }
-
-let mainWindow: BrowserWindow | null = null;
 
 app.whenReady().then(() => {
   mainWindow = createWindow();
@@ -44,6 +66,18 @@ app.whenReady().then(() => {
     })
   })
 
+  // 处理从URL启动的情况
+  app.on('open-url', (event, url) => {
+    event.preventDefault();
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) {
       mainWindow = createWindow();
@@ -55,7 +89,9 @@ app.on('window-all-closed', function () {
   if (httpServer) {
     httpServer.close();
   }
-  if (process.platform !== 'darwin') app.quit()
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
 ipcMain.on('message', (event, message) => {
