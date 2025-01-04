@@ -1,4 +1,4 @@
-import { SaveSentenceDTO, WordVO } from "@/types/api.ts";
+import { SaveSentenceDTO, WordVO } from "@/renderer/types/api.ts";
 
 interface StoredWord extends WordVO {
   sentenceId: number;

@@ -489,7 +489,7 @@ defineExpose({
 }
 
 /* Responsive Design */
-@media (max-width: 800px) {
+@media (max-width: 700px) {
     .text-processor__container {
         flex-direction: column;
     }

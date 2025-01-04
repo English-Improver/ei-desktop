@@ -57,11 +57,10 @@ export interface WordVO {
 
 // SaveSentence 接口定义
 export interface SaveSentenceDTO {
-  // @NotBlank 对应的字段在 TypeScript 中标记为必填
   sentence: string;
   explanation: string;
-
-  // 可选字段
   userId?: number;
   sentenceId?: number;
+  words?: WordVO[];
+  timestamp?: string;
 }

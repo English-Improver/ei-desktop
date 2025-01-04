@@ -143,18 +143,31 @@ async function saveSentence() {
 
     isSaving.value = true;
     try {
-        const savedSentence = localStorageService.saveSentence({
+        // 先调用API保存句子
+        const response = await sentenceService.saveSentence({
             sentence: sentence.value,
             explanation: explanation.value,
+            words: words.value
         });
-        notificationRef.value?.show('保存成功', 'success');
-        // Reload history if panel is visible
-        if (showHistory.value) {
-            loadHistory();
+
+        if (response.success && response.data) {
+            // API保存成功后，更新本地存储
+            const savedSentence = localStorageService.saveSentence({
+                ...response.data,
+                sentenceId: response.data.sentenceId,
+                timestamp: new Date().toISOString()
+            });
+            
+            // 如果历史面板可见，重新加载历史记录
+            if (showHistory.value) {
+                loadHistory();
+            }
+            
+            return savedSentence;
         }
     } catch (error) {
         console.error('Save sentence failed:', error);
-        notificationRef.value?.show('保存失败', 'error');
+        notificationRef.value?.show('保存句子失败', 'error');
     } finally {
         isSaving.value = false;
     }
@@ -162,23 +175,72 @@ async function saveSentence() {
 
 // 保存单词
 async function saveWordInSentence(word: WordVO, contextType: string) {
+    console.log('Starting word save process:', { word, contextType });
+    
+    if (!sentence.value || !explanation.value) {
+        console.log('No sentence or explanation found');
+        notificationRef.value?.show('请先解释句子', 'warning');
+        return;
+    }
+
     try {
-        const currentSentence = localStorageService.getSentences().find(s => s.sentence === sentence.value);
-        if (!currentSentence) {
-            notificationRef.value?.show('请先保存句子', 'error');
+        // 获取当前句子ID
+        let currentSentenceId = sentenceHistory.value[0]?.sentenceId;
+        console.log('Current sentence ID:', currentSentenceId);
+        
+        if (!currentSentenceId) {
+            console.warn('No sentence ID found');
+            notificationRef.value?.show('请先保存句子', 'warning');
             return;
         }
-        
-        localStorageService.saveWord(word, currentSentence.sentenceId);
-        notificationRef.value?.show('单词保存成功', 'success');
-        
-        // 更新历史记录中的单词列表
-        if (showHistory.value) {
-            savedWords.value = localStorageService.getWords();
+
+        try {
+            // 先进行本地保存
+            console.log('Saving word to local storage...');
+            const savedWord = localStorageService.saveWord(word, currentSentenceId);
+            console.log('Word saved to local storage:', savedWord);
+            
+            // 更新当前单词列表
+            console.log('Updating current word list...');
+            if (!words.value) words.value = [];
+            words.value.unshift(word);
+            
+            // 更新历史记录中的句子单词列表
+            console.log('Updating sentence history...');
+            const sentence = sentenceHistory.value.find(s => s.sentenceId === currentSentenceId);
+            if (sentence) {
+                if (!sentence.words) sentence.words = [];
+                sentence.words.unshift(word);
+                try {
+                    localStorageService.saveSentence(sentence);
+                    console.log('Sentence updated in local storage');
+                } catch (storageError) {
+                    console.error('Failed to update sentence in local storage:', storageError);
+                }
+            } else {
+                console.warn('Sentence not found in history:', currentSentenceId);
+            }
+
+            // 调用API保存单词
+            console.log('Calling API to save word...');
+            sentenceService.saveWordInSentence(currentSentenceId, word)
+                .then(response => {
+                    console.log('API save word response:', response);
+                })
+                .catch(error => {
+                    console.error('API save word failed:', error);
+                    // API保存失败不影响本地保存
+                });
+
+            notificationRef.value?.show('单词保存成功', 'success');
+            return savedWord;
+        } catch (storageError) {
+            console.error('Local storage operation failed:', storageError);
+            throw storageError;
         }
     } catch (error) {
         console.error('Save word failed:', error);
-        notificationRef.value?.show('保存失败', 'error');
+        notificationRef.value?.show(error.message || '保存单词失败', 'error');
     }
 }
 
@@ -209,39 +271,107 @@ const handleTranslate = async (word: string) => {
 // 解释单词
 const handleTranslateByButton = async (word: string) => {
     if (!word || isTranslating.value) return;
-
+    console.log('Translating word:', word);
     isTranslating.value = true;
     try {
         const res = await sentenceService.explainWordInSentence(
             sentence.value,
             word,
         );
+        console.log('Translation result:', res);
+        // save local
+        const savedWord = localStorageService.saveWord(res, sentenceHistory.value[0]?.sentenceId);
+        console.log('Word saved to local storage:', savedWord);
+        // notification
+        notificationRef.value?.show('单词解释成功', 'success');
         words.value = [...words.value, res];
+    }catch (error){
+        console.error('Translation failed:', error);
+        notificationRef.value?.show(error.message || '单词解释失败', 'error');
     } finally {
         isTranslating.value = false;
     }
 };
 
 // 解释句子
-const handleExplain = async () => {
-    if (!sentence.value) return;
+async function handleExplain() {
+    if (!sentence.value) {
+        console.log('No sentence to explain');
+        return;
+    }
+    
+    console.log('Starting sentence explanation:', sentence.value);
     isExplain.value = true;
+    
     try {
-        const res = await window.electronAPI.explain(sentence.value);
-        explanation.value = res;
-    } catch (e) {
-        console.error(e);
+        console.log('Calling explain API...');
+        const result = await sentenceService.explain(sentence.value);
+        console.log('API response:', result);
+        
+        if (result.success && result.data) {
+            explanation.value = result.data;
+            console.log('Explanation successful, saving to local storage...');
+            
+            try {
+                // 解释成功后立即进行本地保存
+                const savedSentence = localStorageService.saveSentence({
+                    sentence: sentence.value,
+                    explanation: explanation.value,
+                    sentenceId: Date.now(),
+                    timestamp: new Date().toISOString()
+                });
+                console.log('Sentence saved to local storage:', savedSentence);
+                
+                if (savedSentence) {
+                    notificationRef.value?.show('句子解释成功并已保存', 'success');
+                } else {
+                    console.warn('Local storage save returned null/undefined');
+                    notificationRef.value?.show('句子解释成功', 'success');
+                }
+            } catch (storageError) {
+                console.error('Local storage save failed:', storageError);
+                notificationRef.value?.show('句子解释成功，但本地保存失败', 'warning');
+            }
+        } else {
+            console.error('API returned unsuccessful result:', result);
+            notificationRef.value?.show(result.message || '解释失败', 'error');
+        }
+    } catch (error) {
+        console.error('Explanation failed:', error);
+        notificationRef.value?.show(error.message || '解释失败', 'error');
     } finally {
         isExplain.value = false;
+        console.log('Explanation process completed');
     }
-};
+}
 
 const handleExplainComman = async () => {
     if (!sentence.value) return;
     isExplain.value = true;
+    console.log('Starting sentence explanation:', sentence.value);
     try {
         const res = await sentenceService.explain(sentence.value);
         explanation.value = res;
+        console.log('Explanation successful, saving to local storage...');
+        try {
+            // 解释成功后立即进行本地保存
+            const savedSentence = localStorageService.saveSentence({
+                sentence: sentence.value,
+                explanation: explanation.value,
+                sentenceId: Date.now(),
+                timestamp: new Date().toISOString()
+            });
+            console.log('Sentence saved to local storage:', savedSentence);
+            if (savedSentence) {
+                notificationRef.value?.show('句子解释成功并已保存', 'success');
+            } else {
+                console.warn('Local storage save returned null/undefined');
+                notificationRef.value?.show('句子解释成功', 'success');
+            }
+        } catch (storageError) {
+            console.error('Local storage save failed:', storageError);
+            notificationRef.value?.show('句子解释成功，但本地保存失败', 'warning');
+        }   
     } catch (e) {
         console.error(e);
     } finally {
@@ -318,7 +448,7 @@ onMounted(() => {
 
 .analysis-area {
     width: 98%;
-    height: 80%;
+    
     padding: 0 12px;
     margin-right: 8px;
     display: flex;
@@ -365,7 +495,8 @@ onMounted(() => {
 
 /* 为词汇解释面板的内容添加滚动 */
 .word-explanation .panel-content {
-    overflow-y: auto;
+    overflow-y: auto; /* 添加垂直滚动条 */
+    padding: 16px;
 }
 
 .empty-state {
@@ -408,24 +539,59 @@ onMounted(() => {
 /* 历史记录面板 */
 .history-panel {
     position: fixed;
-    top: var(--header-height);
-    right: 0;
+    top: 0;
+    right: -300px;
     width: 300px;
-    height: calc(100vh - var(--header-height));
-    background: var(--color-bg-secondary);
-    border-left: 1px solid var(--color-border);
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
+    height: 100vh;
+    background: var(--color-bg-panel);
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
     z-index: 100;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 确保内容不会溢出面板 */
 }
 
 .history-panel--visible {
-    transform: translateX(0);
+    right: 0;
+}
+
+/* 确保 HistoryTabs 组件可以滚动 */
+:deep(.history-tabs) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 防止水平滚动 */
+}
+
+/* 确保标签内容区域可以滚动 */
+:deep(.history-tabs .tab-content) {
+    flex: 1;
+    overflow-y: auto; /* 添加垂直滚动条 */
+    padding: 16px;
+}
+
+/* 美化滚动条 */
+:deep(.history-tabs .tab-content::-webkit-scrollbar) {
+    width: 6px;
+}
+
+:deep(.history-tabs .tab-content::-webkit-scrollbar-track) {
+    background: var(--color-bg-secondary);
+    border-radius: 3px;
+}
+
+:deep(.history-tabs .tab-content::-webkit-scrollbar-thumb) {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+:deep(.history-tabs .tab-content::-webkit-scrollbar-thumb:hover) {
+    background: var(--color-border-hover);
 }
 
 /* 响应式设计 */
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 700px) {
     .main-content {
         padding-right: 20px;
     }

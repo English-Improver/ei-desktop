@@ -150,39 +150,31 @@ function reloadSentence(sentence: SaveSentenceDTO) {
 .history-tabs {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    background: var(--bg-color-secondary);
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    overflow: hidden;
+    height: calc(100vh - var(--nav-height));
+    margin-top: var(--nav-height);
+    background: var(--color-bg-panel);
 }
 
 .view-selector {
+    padding: 12px;
     display: flex;
-    gap: 1px;
-    background: var(--border-color);
-    padding: 1px;
-    margin: 12px;
-    border-radius: 6px;
+    gap: 8px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
 }
 
 .view-btn {
-    flex: 1;
-    padding: 8px;
+    padding: 8px 16px;
     border: none;
-    background: var(--bg-color);
-    color: var(--text-secondary);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text);
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 13px;
 }
 
-.view-btn:first-child {
-    border-radius: 6px 0 0 6px;
-}
-
-.view-btn:last-child {
-    border-radius: 0 6px 6px 0;
+.view-btn:hover {
+    background: var(--color-bg-hover);
 }
 
 .view-btn.active {
@@ -194,85 +186,100 @@ function reloadSentence(sentence: SaveSentenceDTO) {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 0 12px 12px;
+    overflow: hidden;
 }
 
 .search-box {
-    margin-bottom: 12px;
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .search-box input {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background: var(--bg-color);
-    color: var(--text-primary);
-    font-size: 13px;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-bg-input);
 }
 
-.sentence-list,
-.word-list {
+.sentence-list, .word-list {
     flex: 1;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    padding: 8px;
 }
 
-.sentence-item {
-    background: var(--bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
+.sentence-item, .word-item {
     padding: 12px;
+    border-radius: 4px;
+    background: var(--color-bg-secondary);
+    margin-bottom: 8px;
     cursor: pointer;
     transition: all 0.2s;
 }
 
-.sentence-item:hover {
-    border-color: var(--primary-color);
+.sentence-item:hover, .word-item:hover {
+    background: var(--color-bg-hover);
 }
 
-.sentence-item.active {
-    border-color: var(--primary-color);
-    background: var(--primary-color-10);
+.sentence-item.active, .word-item.active {
+    background: var(--color-bg-active);
 }
 
 .sentence-preview {
-    color: var(--text-primary);
-    font-size: 13px;
-    line-height: 1.5;
     margin-bottom: 8px;
+    line-height: 1.4;
+    max-height: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
 }
 
 .sentence-meta {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    font-size: 12px;
-    color: var(--text-secondary);
+    align-items: center;
+    font-size: 0.9em;
+    color: var(--color-text-light);
 }
 
 .reload-btn {
     padding: 4px 8px;
     border: none;
     border-radius: 4px;
-    background: var(--primary-color-10);
-    color: var(--primary-color);
-    font-size: 12px;
+    background: var(--primary-color);
+    color: white;
     cursor: pointer;
+    font-size: 0.9em;
     transition: all 0.2s;
 }
 
 .reload-btn:hover {
-    background: var(--primary-color-20);
+    background: var(--primary-color-dark);
 }
 
-.word-item {
-    background: var(--bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 12px;
+/* 美化滚动条 */
+.sentence-list::-webkit-scrollbar,
+.word-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sentence-list::-webkit-scrollbar-track,
+.word-list::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+    border-radius: 3px;
+}
+
+.sentence-list::-webkit-scrollbar-thumb,
+.word-list::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+.sentence-list::-webkit-scrollbar-thumb:hover,
+.word-list::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-hover);
 }
 
 .word-header {
@@ -289,17 +296,17 @@ function reloadSentence(sentence: SaveSentenceDTO) {
 }
 
 .pronunciation {
-    color: var(--text-secondary);
+    color: var(--color-text-light);
     font-size: 13px;
 }
 
 .word-meaning {
-    color: var(--text-secondary);
+    color: var(--color-text-light);
     font-size: 13px;
     line-height: 1.5;
     margin-bottom: 8px;
     padding-bottom: 8px;
-    border-bottom: 1px dashed var(--border-color);
+    border-bottom: 1px dashed var(--color-border);
 }
 
 .meanings-list {
@@ -324,25 +331,25 @@ function reloadSentence(sentence: SaveSentenceDTO) {
 }
 
 .definition {
-    color: var(--text-secondary);
+    color: var(--color-text-light);
     flex: 1;
 }
 
 .sentence-context {
-    background: var(--bg-color-secondary);
+    background: var(--color-bg-secondary);
     padding: 8px;
     border-radius: 4px;
     font-size: 13px;
 }
 
 .context-label {
-    color: var(--text-secondary);
+    color: var(--color-text-light);
     margin-bottom: 4px;
     font-size: 12px;
 }
 
 .context-text {
-    color: var(--text-primary);
+    color: var(--color-text);
     line-height: 1.5;
 }
 
@@ -351,9 +358,9 @@ function reloadSentence(sentence: SaveSentenceDTO) {
     align-items: center;
     justify-content: center;
     padding: 32px;
-    color: var(--text-secondary);
+    color: var(--color-text-light);
     font-size: 13px;
-    background: var(--bg-color-secondary);
+    background: var(--color-bg-secondary);
     border-radius: 6px;
     min-height: 120px;
 }
