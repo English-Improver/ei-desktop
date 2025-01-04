@@ -242,12 +242,10 @@ export default {
 .markdown-viewer-container {
     display: flex;
     flex-direction: column;
-    /* border: 1px solid #e1e4e8; */
-    /* border-radius: 6px; */
     overflow: hidden;
-    /* background-color: white; */
     font-size: 14px;
     height: 100%;
+    min-height: 0; /* 确保flex子元素不会超出容器 */
 }
 
 .toolbar {
@@ -276,8 +274,12 @@ export default {
 
 .markdown-content-wrapper {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
     background-color: white;
+    min-height: 0; /* 确保内容可以滚动 */
+    height: 100%;
 }
 
 .markdown-content-wrapper.dark-mode {
@@ -286,11 +288,10 @@ export default {
 }
 
 .sentence-analysis {
-    /* border: 1px solid #e1e4e8; */
+    flex: 0 0 auto; /* 防止句子分析块被压缩 */
     border-radius: 4px;
     margin: 0.5rem 0;
     padding: 0.75rem;
-    /* background-color: #f8f9fa; */
     border: 1px solid #e1e4e8;
 }
 

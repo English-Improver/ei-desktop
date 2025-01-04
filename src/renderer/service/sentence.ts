@@ -1,5 +1,5 @@
 import { api } from "../api/axios.js";
-import { SaveSentenceDTO, WordVO } from "@/types/api.ts";
+import { SaveSentenceDTO, WordVO } from "@/renderer/types/api.ts";
 
 /**
  * 解释
@@ -26,18 +26,22 @@ export const sentenceService = {
   /**
    *
    * 在wordVO结构改变的时候记得更新
-   * @param sentenceId
    * @param word
+   * @param contextType
    * @returns
    */
-  saveWordInSentence(sentenceId: number, word: WordVO) {
+  saveWordInSentence(word: WordVO, contextType: string) {
     return api.post("/sentence/saveWordInSentence", {
-      sentenceId: sentenceId,
       word: word.word,
       pronunciation: word.pronunciation,
       meaningInSentence: word.meaningInSentence,
       meanings: word.meanings,
       isWord: word.isWord,
+      contextType: contextType,
     });
   },
+  // 获取单词保存状态
+  getWordSavedStatus(word: string) {
+    return api.post("/sentence/getWordSavedStatus", { word });
+  }
 };

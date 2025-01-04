@@ -11,41 +11,77 @@ const LOCAL_STORAGE_KEYS = {
 
 export const localStorageService = {
   // Save sentence and its explanation
-  saveSentence(sentence: SaveSentenceDTO): SaveSentenceDTO {
-    const sentences = this.getSentences();
-    const newSentence = {
-      ...sentence,
-      sentenceId: Date.now(), // Generate a unique ID
-      timestamp: new Date().toISOString(),
-    };
-    sentences.unshift(newSentence); // Add to beginning of array
-    localStorage.setItem(LOCAL_STORAGE_KEYS.SENTENCES, JSON.stringify(sentences));
-    return newSentence;
+  saveSentence(sentence: SaveSentenceDTO) {
+    try {
+      // 获取现有的句子列表
+      const sentences = this.getSentences();
+      
+      // 查找是否已存在相同的句子
+      const existingIndex = sentences.findIndex(s => s.sentence === sentence.sentence);
+      
+      if (existingIndex !== -1) {
+        // 如果存在，更新现有句子
+        sentences[existingIndex] = {
+          ...sentences[existingIndex],
+          ...sentence,
+          words: sentence.words || sentences[existingIndex].words || []
+        };
+      } else {
+        // 如果不存在，添加新句子
+        sentences.unshift(sentence);
+      }
+      
+      // 保存更新后的列表
+      localStorage.setItem(LOCAL_STORAGE_KEYS.SENTENCES, JSON.stringify(sentences));
+      return sentence;
+    } catch (error) {
+      console.error('Save sentence failed:', error);
+      throw error;
+    }
   },
 
   // Get all stored sentences
   getSentences(): SaveSentenceDTO[] {
-    const sentencesStr = localStorage.getItem(LOCAL_STORAGE_KEYS.SENTENCES);
-    return sentencesStr ? JSON.parse(sentencesStr) : [];
+    try {
+      const sentences = localStorage.getItem(LOCAL_STORAGE_KEYS.SENTENCES);
+      return sentences ? JSON.parse(sentences) : [];
+    } catch (error) {
+      console.error('Get sentences failed:', error);
+      return [];
+    }
   },
 
   // Save word with its sentence relationship
-  saveWord(word: WordVO, sentenceId: number): StoredWord {
-    const words = this.getWords();
-    const storedWord: StoredWord = {
-      ...word,
-      sentenceId,
-      timestamp: new Date().toISOString(),
-    };
-    words.unshift(storedWord);
-    localStorage.setItem(LOCAL_STORAGE_KEYS.WORDS, JSON.stringify(words));
-    return storedWord;
+  saveWord(word: WordVO, sentenceId?: string): StoredWord {
+    try {
+      const words = this.getWords();
+      const existingIndex = words.findIndex(w => w.word === word.word);
+      
+      if (existingIndex !== -1) {
+        // 更新现有单词
+        words[existingIndex] = { ...words[existingIndex], ...word };
+      } else {
+        // 添加新单词
+        words.unshift(word);
+      }
+      
+      localStorage.setItem(LOCAL_STORAGE_KEYS.WORDS, JSON.stringify(words));
+      return words[existingIndex !== -1 ? existingIndex : 0];
+    } catch (error) {
+      console.error('Save word failed:', error);
+      throw error;
+    }
   },
 
   // Get all stored words
   getWords(): StoredWord[] {
-    const wordsStr = localStorage.getItem(LOCAL_STORAGE_KEYS.WORDS);
-    return wordsStr ? JSON.parse(wordsStr) : [];
+    try {
+      const words = localStorage.getItem(LOCAL_STORAGE_KEYS.WORDS);
+      return words ? JSON.parse(words) : [];
+    } catch (error) {
+      console.error('Get words failed:', error);
+      return [];
+    }
   },
 
   // Get words for a specific sentence

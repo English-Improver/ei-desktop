@@ -6,9 +6,10 @@
                 class="save-all-btn"
                 @click="saveAllWords"
                 title="保存所有单词"
+                :disabled="allWordsSaved"
             >
-                <span class="save-icon">💾</span>
-                保存所有单词
+                <span class="save-icon">{{ allWordsSaved ? '✓' : '💾' }}</span>
+                {{ allWordsSaved ? '已保存全部' : '保存所有单词' }}
             </button>
         </div>
         <div
@@ -22,67 +23,71 @@
                 :class="{ active: expandedWords[index] }"
                 @click="toggleExpand(index)"
             >
-                {{ word.word }}
-                <span class="arrow" :class="{ rotated: expandedWords[index] }"
-                    >▼</span
-                >
-
-                <!-- Dropdown Menu -->
-                <div class="dropdown-container" @click.stop>
-                    <select
-                        v-model="word.contextType"
-                        class="context-dropdown"
-                        @change="handleContextChange(word, $event)"
-                    >
-                        <option value="1">当前句子</option>
-                        <option value="2">没有句子</option>
-                    </select>
+                <div class="tag-content">
+                    <span class="word-text">{{ word.word }}</span>
+                    <div class="tag-actions">
+                        <!-- Context Dropdown -->
+                        <select
+                            v-model="word.contextType"
+                            class="context-dropdown"
+                            @click.stop
+                            @change="handleContextChange(word, $event)"
+                            :title="word.contextType === '1' ? '当前句子' : '无句子'"
+                        >
+                            <option value="1">句</option>
+                            <option value="2">无</option>
+                        </select>
+                        <!-- Save Button -->
+                        <button
+                            class="save-btn"
+                            @click.stop="saveWord(word)"
+                            :title="word.saved ? '已保存' : '保存单词'"
+                            :disabled="word.saving || word.saved"
+                        >
+                            <span class="save-icon">
+                                <template v-if="word.saving">⏳</template>
+                                <template v-else-if="word.saved">✓</template>
+                                <template v-else>💾</template>
+                            </span>
+                        </button>
+                        <span class="arrow" :class="{ rotated: expandedWords[index] }">▼</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Expanded Details -->
             <transition name="expand">
                 <div v-if="expandedWords[index]" class="details">
-                    <!-- Save Button -->
-                    <button
-                        class="save-btn"
-                        @click.stop="saveWord(word)"
-                        title="保存单词"
-                    >
-                        <span class="save-icon">💾</span>
-                    </button>
                     <!-- Phonetic Section -->
                     <div class="phonetic">
-                        <span class="label">音标:</span>
-                        <span class="value">/{{ word.pronunciation }}/</span>
+                        <span class="phonetic-text">{{ word.phonetic }}</span>
                         <button
                             v-if="word.audioUrl"
                             class="play-btn"
-                            @click.stop="playPronunciation(word.audioUrl)"
+                            @click="playPronunciation(word.audioUrl)"
                             title="播放发音"
                         >
                             🔊
                         </button>
                     </div>
-
+                    
+                    <!-- Translation -->
+                    <div class="translation">{{ word.translation }}</div>
+                    
                     <!-- Sentence Meaning -->
-                    <div class="sentence-meaning">
+                    <div v-if="word.meaningInSentence" class="sentence-meaning">
                         {{ word.meaningInSentence }}
                     </div>
-
+                    
                     <!-- Word Meanings -->
-                    <div class="meanings">
+                    <div v-if="word.meanings" class="meanings">
                         <div
                             v-for="(meaning, mIndex) in word.meanings"
                             :key="mIndex"
                             class="meaning-item"
                         >
-                            <span class="part-of-speech">{{
-                                meaning.property
-                            }}</span>
-                            <span class="definition">{{
-                                meaning.meaning
-                            }}</span>
+                            <span class="part-of-speech">{{ meaning.property }}</span>
+                            <span class="definition">{{ meaning.meaning }}</span>
                         </div>
                     </div>
                 </div>
@@ -92,92 +97,61 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watchEffect, watch } from "vue";
+import { ref, watchEffect, computed } from "vue";
 import { WordVO } from "@/types/api.ts";
 
 const emit = defineEmits<{
     (e: "saveWordInSentence", word: WordVO, contextType: string): void;
-    (e: "contextChange", word: WordVO, contextType: string): void;
 }>();
 
 const props = defineProps<{
-    words: {
-        word: string;
-        pronunciation: string;
-        meaningInSentence: string;
-        meanings: Array<{
-            property: string;
-            meaning: string;
-        }>;
-        audioUrl?: string;
-        isWord: number;
-        contextType?: string; // New prop for context type
-    }[];
+    words: WordVO[];
 }>();
 
-const expandedWords = ref({});
-const audio = ref(null);
-const previousLength = ref(0);
+// 跟踪每个单词的展开状态
+const expandedWords = ref<{ [key: number]: boolean }>({});
 
-// Watch for array changes
-watch(
-    () => props.words,
-    (newWords) => {
-        if (newWords?.length > 0) {
-            if (newWords.length > previousLength.value) {
-                expandedWords.value[newWords.length - 1] = true;
-                // Set default context type for new words
-                if (!newWords[newWords.length - 1].contextType) {
-                    newWords[newWords.length - 1].contextType = "1";
-                }
-            }
-            previousLength.value = newWords.length;
-        }
-    },
-    {
-        deep: true,
-        immediate: true,
-    },
-);
-
-// Manage audio resources
-watchEffect((onCleanup) => {
-    if (audio.value) {
-        onCleanup(() => {
-            audio.value.pause();
-            audio.value = null;
-        });
-    }
-});
-
-const toggleExpand = (index) => {
+// 切换展开状态
+const toggleExpand = (index: number) => {
     expandedWords.value[index] = !expandedWords.value[index];
 };
 
-const playPronunciation = (url) => {
+// 播放发音
+const playPronunciation = async (url?: string) => {
     if (!url) return;
-    if (!audio.value) {
-        audio.value = new Audio(url);
-    } else {
-        audio.value.src = url;
+    try {
+        const audio = new Audio(url);
+        await audio.play();
+    } catch (error) {
+        console.error('Failed to play audio:', error);
     }
-    audio.value.play();
 };
 
+// 保存单词
 const saveWord = (word: WordVO) => {
-    const contextType = word.contextType || "1"; // 如果没有设置，默认使用 '1'
-    emit("saveWordInSentence", word, contextType);
+    if (!word || word.saving || word.saved) return;
+    word.saving = true;
+    emit('saveWordInSentence', word, word.contextType || '1');
 };
 
+// 处理上下文类型变化
 const handleContextChange = (word: WordVO, event: Event) => {
-    const target = event.target as HTMLSelectElement;
-    emit("contextChange", word, target.value);
+    word.contextType = (event.target as HTMLSelectElement).value;
 };
 
+// 保存所有未保存的单词
 const saveAllWords = () => {
-    // emit("saveAllWords", props.words);
+    props.words
+        .filter(word => !word.saved && !word.saving)
+        .forEach(word => saveWord(word));
 };
+
+// 计算是否所有单词都已保存
+const allWordsSaved = computed(() => {
+    return props.words.every((word) => word.saved);
+});
 </script>
+
 <style scoped>
 .word-list {
     display: flex;
@@ -188,13 +162,8 @@ const saveAllWords = () => {
     padding-right: 8px;
 }
 
-.word-tag-container {
-    flex-shrink: 0;
-}
-
 .tag {
     display: flex;
-    justify-content: flex-start;
     align-items: center;
     padding: 4px 12px;
     background-color: #e6f4ff;
@@ -204,98 +173,6 @@ const saveAllWords = () => {
     cursor: pointer;
     transition: all 0.3s;
     user-select: none;
-}
-
-/* 新增：下拉框容器样式 */
-.dropdown-container {
-    margin: 0 8px;
-    position: relative;
-}
-
-/* 新增：下拉框基础样式 */
-.context-dropdown {
-    padding: 2px 8px;
-    font-size: 12px;
-    border: 1px solid #91caff;
-    border-radius: 12px;
-    background-color: white;
-    color: #1677ff;
-    cursor: pointer;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-/* 新增：下拉框悬停效果 */
-.context-dropdown:hover {
-    border-color: #69b1ff;
-    background-color: #f5f5f5;
-}
-
-/* 新增：下拉框焦点效果 */
-.context-dropdown:focus {
-    border-color: #1677ff;
-    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
-}
-
-/* 新增：下拉框选项样式 */
-.context-dropdown option {
-    background-color: white;
-    color: #333;
-    padding: 8px;
-}
-
-.save-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 2px 6px;
-    margin-left: 4px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    opacity: 0.6;
-    transition:
-        opacity 0.2s,
-        background-color 0.2s;
-}
-
-.save-btn:hover {
-    opacity: 1;
-    background-color: rgba(255, 255, 255, 0.3);
-}
-
-.save-icon {
-    font-size: 14px;
-}
-
-.save-all-container {
-    padding: 8px 4px;
-    border-bottom: 1px solid #e8e8e8;
-    margin-bottom: 8px;
-}
-
-.save-all-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 8px 16px;
-    background-color: #e6f4ff;
-    color: #1677ff;
-    border: 1px solid #91caff;
-    border-radius: 16px;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-size: 14px;
-}
-
-.save-all-btn:hover {
-    background-color: #bae0ff;
-    border-color: #69b1ff;
-}
-
-.save-all-btn .save-icon {
-    font-size: 16px;
 }
 
 .tag:hover {
@@ -309,11 +186,74 @@ const saveAllWords = () => {
     border-radius: 16px 16px 0 0;
 }
 
+.tag-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+}
+
+.word-text {
+    font-weight: 500;
+}
+
+.tag-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.context-dropdown {
+    padding: 2px 4px;
+    font-size: 12px;
+    border: 1px solid #91caff;
+    border-radius: 8px;
+    background-color: white;
+    color: #1677ff;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+    width: 40px;
+}
+
+.context-dropdown:hover {
+    border-color: #69b1ff;
+    background-color: #f5f5f5;
+}
+
+.context-dropdown:focus {
+    border-color: #1677ff;
+    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+}
+
+.save-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    opacity: 0.6;
+    transition: all 0.2s;
+}
+
+.save-btn:hover:not(:disabled) {
+    opacity: 1;
+}
+
+.save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.save-icon {
+    font-size: 14px;
+}
+
 .arrow {
-    display: inline-block;
-    margin-left: 4px;
-    font-size: 0.75em;
-    transition: transform 0.3s;
+    font-size: 10px;
+    transition: transform 0.3s ease;
 }
 
 .arrow.rotated {
@@ -321,8 +261,8 @@ const saveAllWords = () => {
 }
 
 .details {
-    padding: 12px;
     margin-top: -1px;
+    padding: 12px;
     background-color: white;
     border: 1px solid #69b1ff;
     border-top: none;
@@ -331,35 +271,45 @@ const saveAllWords = () => {
 }
 
 .phonetic {
-    margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.sentence-meaning {
-    margin-bottom: 8px;
-    color: #333;
-    font-size: 0.95em;
-    line-height: 1.4;
-}
-
-.label {
+    margin-bottom: 4px;
     color: #666;
-    font-size: 0.9em;
+}
+
+.phonetic-text {
+    font-size: 13px;
 }
 
 .play-btn {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
+    padding: 2px;
+    font-size: 14px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
 }
 
 .play-btn:hover {
-    background-color: #f0f0f0;
+    opacity: 1;
+}
+
+.translation {
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+.sentence-meaning {
+    margin-bottom: 8px;
+    color: #666;
+    font-size: 0.9em;
+    line-height: 1.4;
+    padding-left: 8px;
+    border-left: 2px solid #e8e8e8;
 }
 
 .meanings {
@@ -383,12 +333,53 @@ const saveAllWords = () => {
 
 .definition {
     color: #333;
+    line-height: 1.4;
 }
 
+.save-all-container {
+    padding: 4px;
+    border-bottom: 1px solid #e8e8e8;
+    margin-bottom: 8px;
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 1;
+}
+
+.save-all-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    padding: 6px 12px;
+    background-color: #e6f4ff;
+    color: #1677ff;
+    border: 1px solid #91caff;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 13px;
+}
+
+.save-all-btn:hover:not(:disabled) {
+    background-color: #bae0ff;
+    border-color: #69b1ff;
+}
+
+.save-all-btn:disabled {
+    background-color: #f0f0f0;
+    border-color: #d9d9d9;
+    color: #bfbfbf;
+    cursor: not-allowed;
+}
+
+/* Expand animation */
 .expand-enter-active,
 .expand-leave-active {
-    transition: all 0.3s;
+    transition: all 0.3s ease;
     max-height: 300px;
+    overflow: hidden;
 }
 
 .expand-enter-from,
