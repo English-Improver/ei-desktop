@@ -10,7 +10,11 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/book",
     component: WordsBook,
-},
+  },
+  {
+    path: "/setting",
+    component: () => import("../view/Settings.vue"),
+  }
 ];
 
 const router = createRouter({

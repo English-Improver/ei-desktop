@@ -28,15 +28,31 @@ export class HttpServer {
         const data = req.body;
         console.log('Received data:', data);
 
-        // Forward data to renderer process
+        // 检查请求数据格式
+        if (!data.text || !data.function) {
+          throw new Error('Invalid request data: missing text or function');
+        }
+
+        // 验证function类型
+        if (!['translate', 'explain'].includes(data.function)) {
+          throw new Error('Invalid function type: must be translate or explain');
+        }
+
+        // 发送到渲染进程
         if (this.mainWindow) {
-          this.mainWindow.webContents.send('trigger-function', data);
+          this.mainWindow.webContents.send('trigger-function', {
+            function: data.function,
+            text: data.text
+          });
         }
 
         res.json({ success: true });
       } catch (error) {
         console.error('Error processing request:', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+        res.status(500).json({ 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Internal server error' 
+        });
       }
     });
   }

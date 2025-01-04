@@ -1,4 +1,5 @@
 import { SaveSentenceDTO, WordVO } from "@/renderer/types/api.ts";
+import { settingsService } from './settingsService';
 
 interface StoredWord extends WordVO {
   sentenceId: number;
@@ -13,6 +14,7 @@ export const localStorageService = {
   // Save sentence and its explanation
   saveSentence(sentence: SaveSentenceDTO) {
     try {
+      const settings = settingsService.getSettings();
       // 获取现有的句子列表
       const sentences = this.getSentences();
       
@@ -29,6 +31,10 @@ export const localStorageService = {
       } else {
         // 如果不存在，添加新句子
         sentences.unshift(sentence);
+        // 限制句子数量
+        if (sentences.length > settings.maxSentences) {
+          sentences.pop();
+        }
       }
       
       // 保存更新后的列表
@@ -40,21 +46,19 @@ export const localStorageService = {
     }
   },
 
-  // Get all stored sentences
-  getSentences(): SaveSentenceDTO[] {
-    try {
-      const sentences = localStorage.getItem(LOCAL_STORAGE_KEYS.SENTENCES);
-      return sentences ? JSON.parse(sentences) : [];
-    } catch (error) {
-      console.error('Get sentences failed:', error);
-      return [];
-    }
-  },
-
   // Save word with its sentence relationship
-  saveWord(word: WordVO, sentenceId?: string): StoredWord {
+  saveWord(word: WordVO): StoredWord {
     try {
+      const settings = settingsService.getSettings();
+      
+      // 获取现有的单词列表
       const words = this.getWords();
+
+      // 限制单词数量
+      if (words.length >= settings.maxWords) {
+        throw new Error(`Cannot save more than ${settings.maxWords} words.`);
+      }
+      
       const existingIndex = words.findIndex(w => w.word === word.word);
       
       if (existingIndex !== -1) {
@@ -70,6 +74,17 @@ export const localStorageService = {
     } catch (error) {
       console.error('Save word failed:', error);
       throw error;
+    }
+  },
+
+  // Get all stored sentences
+  getSentences(): SaveSentenceDTO[] {
+    try {
+      const sentences = localStorage.getItem(LOCAL_STORAGE_KEYS.SENTENCES);
+      return sentences ? JSON.parse(sentences) : [];
+    } catch (error) {
+      console.error('Get sentences failed:', error);
+      return [];
     }
   },
 

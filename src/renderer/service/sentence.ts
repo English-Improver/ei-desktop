@@ -5,6 +5,7 @@ import { SaveSentenceDTO, WordVO } from "@/renderer/types/api.ts";
  * 解释
  */
 export const sentenceService = {
+  // 解释句子
   explain(sentence: string) {
     return api.post("/sentence/explain", { sentence });
   },

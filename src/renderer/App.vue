@@ -27,7 +27,11 @@
                       <span class="icon">📚</span>
                       <span>Books</span>
                   </div>
-                  <div class="nav-item">
+                  <div
+                      class="nav-item"
+                      :class="{ active: currentRoute === '/setting' }"
+                      @click="goToSetting"
+                  >
                       <span class="icon">⚙️</span>
                       <span>Settings</span>
                   </div>
@@ -64,6 +68,10 @@ const goToHome = () => {
 
 const goToBook = () => {
   router.push("/book");
+};
+
+const goToSetting = () => {
+  router.push('/setting');
 };
 </script>
 
