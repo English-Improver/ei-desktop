@@ -9,7 +9,7 @@
         "oneClick": false,
         "perMachine": false,
         "allowToChangeInstallationDirectory": true,
-        "shortcutName": "Electron App"
+        "shortcutName": "English Improver"
     },
     "win": {
         "target": "nsis",
