@@ -1,11 +1,17 @@
 <template>
   <div id="app" class="app-container">
+      <div class="drag-region"></div>
       <!-- Top Navigation Bar -->
       <nav class="top-nav">
           <div class="nav-content">
               <!-- Logo/Brand Area -->
               <div class="brand">
-                  <span class="logo">📚</span>
+                  <span class="logo">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                      </svg>
+                  </span>
                   <span class="brand-name">Reader</span>
               </div>
 
@@ -16,24 +22,42 @@
                       :class="{ active: currentRoute === '/' }"
                       @click="goToHome"
                   >
-                      <span class="icon">📄</span>
-                      <span>Text Analysis</span>
+                      <span class="icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="16" y1="13" x2="8" y2="13"></line>
+                              <line x1="16" y1="17" x2="8" y2="17"></line>
+                              <line x1="10" y1="9" x2="8" y2="9"></line>
+                          </svg>
+                      </span>
+                      <span class="nav-text">分析</span>
                   </div>
                   <div
                       class="nav-item"
                       :class="{ active: currentRoute === '/book' }"
                       @click="goToBook"
                   >
-                      <span class="icon">📚</span>
-                      <span>Books</span>
+                      <span class="icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                          </svg>
+                      </span>
+                      <span class="nav-text">词库</span>
                   </div>
                   <div
                       class="nav-item"
                       :class="{ active: currentRoute === '/setting' }"
                       @click="goToSetting"
                   >
-                      <span class="icon">⚙️</span>
-                      <span>Settings</span>
+                      <span class="icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <circle cx="12" cy="12" r="3"></circle>
+                              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                          </svg>
+                      </span>
+                      <span class="nav-text">设置</span>
                   </div>
               </div>
           </div>
@@ -46,186 +70,160 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
-import router from "./router/router";
+import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
+const router = useRouter();
 const currentRoute = ref(route.path);
 
 // Watch for route changes
 watch(
-  () => route.path,
-  (newPath) => {
-      currentRoute.value = newPath;
-  },
+    () => route.path,
+    (newPath) => {
+        currentRoute.value = newPath;
+    }
 );
 
 const goToHome = () => {
-  router.push("/");
+    router.push("/");
 };
 
 const goToBook = () => {
-  router.push("/book");
+    router.push("/book");
 };
 
 const goToSetting = () => {
-  router.push('/setting');
+    router.push("/setting");
 };
 </script>
 
 <style scoped>
 .app-container {
-  --primary-color: #4a9eff;
-  --border-color: #e4e7ed;
-  --bg-color: #f5f7fa;
-  --text-primary: #303133;
-  --text-secondary: #606266;
-  --nav-height: 40px;
-
-  width: 100%;
-  height: 100vh;
-  background-color: var(--bg-color);
-  display: flex;
-  flex-direction: column;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-content);
+    color: var(--text-primary);
+    padding-top: 20px; /* 与标题栏高度一致 */
 }
 
-/* Top Navigation Bar */
 .top-nav {
-  height: var(--nav-height);
-  background-color: #fff;
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
+    flex-shrink: 0;
+    background: var(--color-bg-panel);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0;
+    height: 48px;
+    display: flex;
+    align-items: center;
 }
 
 .nav-content {
-  max-width: 1200px;
-  height: 100%;
-  margin: 0 auto;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 32px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
 }
 
-/* Brand/Logo Area */
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: var(--primary-color);
-  padding-right: 32px;
-  border-right: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-right: 32px;
+    opacity: 0.9;
 }
 
 .logo {
-  font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text);
 }
 
-/* Menu Items */
+.brand-name {
+    letter-spacing: 0.5px;
+}
+
 .nav-menu {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 100%;
+    display: flex;
+    height: 48px;
+    gap: 4px;
 }
 
 .nav-item {
-  height: 100%;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.nav-item::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: var(--primary-color);
-  transform: scaleX(0);
-  transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    margin: 6px 0;
+    height: calc(100% - 12px);
+    color: var(--color-text);
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    position: relative;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 14px;
 }
 
 .nav-item:hover {
-  color: var(--primary-color);
-  background-color: #eee9e1;
+    opacity: 0.9;
+    background: var(--color-bg-secondary);
 }
 
 .nav-item.active {
-  color: var(--primary-color);
+    opacity: 1;
+    background: var(--color-bg-secondary);
+    color: var(--color-primary);
 }
 
-.nav-item.active::after {
-  transform: scaleX(1);
+.nav-item.active .icon {
+    color: var(--color-primary);
 }
 
-.nav-item .icon {
-  font-size: 16px;
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text);
+    transition: all 0.2s ease;
 }
 
-/* Main Content Area */
+.nav-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
 .main-content {
-  margin-top: var(--nav-height);
-  margin-right: 8px;
-  height: calc(100vh - var(--nav-height));
-  overflow: hidden;
+    flex: 1;
+    overflow: hidden;
+    background: var(--bg-content);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .nav-content {
-      padding: 0 8px;
-      gap: 16px;
-  }
-
-  .brand {
-      padding-right: 16px;
-  }
-
-  .brand-name {
-      display: none; /* Hide brand name on mobile */
-  }
-
-  .nav-item {
-      padding: 0 12px;
-  }
-
-  .nav-item .icon {
-      font-size: 14px;
-  }
+.drag-region {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    -webkit-app-region: drag;
+    z-index: 1000;
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .top-nav {
-      background-color: #1f1f1f;
-  }
+/* 路由过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
 
-  .nav-item:hover {
-      background-color: rgba(74, 158, 255, 0.1);
-  }
-
-  .app-container {
-      --bg-color: #141414;
-      --text-primary: #ffffff;
-      --text-secondary: #cccccc;
-      --border-color: #333333;
-  }
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
 }
 </style>

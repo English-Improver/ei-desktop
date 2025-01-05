@@ -1,5 +1,6 @@
 {
-    "appId": "com.electron.app",
+    "appId": "com.english.improver",
+    "productName": "English Improver",
     "directories": {
         "output": "dist"
     },
@@ -11,7 +12,8 @@
         "shortcutName": "Electron App"
     },
     "win": {
-        "target": "nsis"
+        "target": "nsis",
+        "icon": "resources/icon.ico"
     },
     "linux":  {
         "target": ["snap"]

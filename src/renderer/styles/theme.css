@@ -1,0 +1,333 @@
+:root {
+    /* 主色调 */
+    --primary-color: #2563eb;         /* 深蓝色 */
+    --primary-hover: #1d4ed8;         /* 更深蓝色 */
+    --primary-active: #1e40af;        /* 最深蓝色 */
+    --primary-light: rgba(37, 99, 235, 0.1);  /* 浅蓝色背景 */
+
+    /* 按钮颜色 - 深黑色系 */
+    --btn-bg: #000000;              /* 纯黑色背景 */
+    --btn-bg-hover: #1a1a1a;        /* 略浅黑色 */
+    --btn-bg-active: #262626;       /* 点击状态 */
+    --btn-text: #808080;            /* 默认文字颜色 - 中灰色 */
+    --btn-text-hover: #a6a6a6;      /* 悬停文字颜色 - 浅灰色 */
+    --btn-text-active: #cccccc;     /* 激活文字颜色 - 更浅灰色 */
+    --btn-border: rgba(255, 255, 255, 0.1);  /* 微弱的白色边框 */
+    --btn-shadow: 0 2px 4px rgba(0, 0, 0, 0.2),
+                 0 4px 8px rgba(0, 0, 0, 0.1),
+                 inset 0 1px 1px rgba(255, 255, 255, 0.1);  /* 内外阴影组合 */
+    --btn-shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.3),
+                       0 8px 16px rgba(0, 0, 0, 0.2),
+                       inset 0 1px 1px rgba(255, 255, 255, 0.15);  /* 悬停时的阴影 */
+    --btn-shadow-active: 0 1px 2px rgba(0, 0, 0, 0.2),
+                        inset 0 1px 2px rgba(0, 0, 0, 0.2);  /* 点击时的阴影 */
+
+    /* 辅助色 */
+    --accent-gold: #8b7355;          /* 金褐色 */
+    --accent-gold-hover: #9c8465;    /* 浅金褐色 */
+
+    /* 可点击元素颜色 */
+    --clickable: #333333;            /* 深灰色 */
+    --clickable-hover: #404040;      /* 浅灰色 */
+    --clickable-active: #4d4d4d;     /* 更浅灰色 */
+
+    /* 提示文本颜色 */
+    --text-hint: #666666;           /* 基础提示文本 - 深灰色 */
+    --text-hint-light: #808080;     /* 次要提示文本 - 中灰色 */
+    --text-hint-lighter: #999999;   /* 最浅提示文本 - 浅灰色 */
+
+    /* 中性色调 - 更深邃的黑色系 */
+    --gray-50: #fafafa;
+    --gray-100: #f4f4f5;
+    --gray-200: #e4e4e7;
+    --gray-300: #d4d4d8;
+    --gray-400: #a1a1aa;
+    --gray-500: #71717a;
+    --gray-600: #52525b;
+    --gray-700: #3f3f46;
+    --gray-800: #27272a;
+    --gray-900: #18181b;
+    --gray-950: #09090b;
+
+    /* 背景色 */
+    --color-bg-panel: var(--gray-900);
+    --color-bg-primary: var(--gray-950);
+    --color-bg-secondary: var(--gray-800);
+    --color-bg-highlight: rgba(255, 255, 255, 0.03);
+
+    /* 文字颜色 */
+    --text-primary: #ffffff;
+    --text-secondary: var(--gray-400);
+    --text-disabled: var(--gray-600);
+
+    /* 边框颜色 */
+    --border-color: var(--gray-800);
+    --border-color-light: var(--gray-700);
+
+    /* 圆角 */
+    --radius-sm: 4px;
+    --radius: 6px;
+    --radius-lg: 8px;
+
+    /* 间距 */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-6: 24px;
+    --space-8: 32px;
+
+    /* 过渡 */
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* 特殊效果 */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+    /* 阴影 */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+
+    /* 选择器颜色 */
+    --color-primary-rgb: 64, 158, 255;  /* #409EFF */
+    --color-text-rgb: 48, 49, 51;       /* #303133 */
+}
+
+/* 可点击元素基础样式 */
+.clickable {
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.clickable:hover {
+    color: var(--text-primary);
+    background-color: var(--clickable-hover);
+}
+
+.clickable:active {
+    background-color: var(--clickable-active);
+}
+
+.clickable.active {
+    color: var(--text-primary);
+    background-color: var(--clickable);
+}
+
+/* 按钮基础样式 */
+.btn.clickable {
+    background-color: var(--btn-bg);
+    color: var(--btn-text);
+    border: 1px solid var(--btn-border);
+    box-shadow: var(--btn-shadow);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 悬停效果 */
+.btn.clickable:hover:not(:disabled) {
+    background-color: var(--btn-bg-hover);
+    box-shadow: var(--btn-shadow-hover);
+    transform: translateY(-1px);
+    color: var(--btn-text-hover);
+}
+
+/* 点击效果 */
+.btn.clickable:active:not(:disabled) {
+    background-color: var(--btn-bg-active);
+    box-shadow: var(--btn-shadow-active);
+    transform: translateY(0);
+    color: var(--btn-text-active);
+}
+
+/* 禁用状态 */
+.btn.clickable:disabled {
+    background-color: var(--gray-900);
+    color: var(--gray-600);
+    box-shadow: none;
+    cursor: not-allowed;
+    border-color: var(--gray-800);
+}
+
+/* 加载状态 */
+.btn.clickable.loading {
+    color: transparent;
+}
+
+.btn.clickable.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin: -8px 0 0 -8px;
+    border-radius: 50%;
+    border: 2px solid;
+    border-color: var(--text-primary) transparent var(--text-primary) transparent;
+    animation: spin 0.8s linear infinite;
+}
+
+/* 激活状态 */
+.btn.clickable.active {
+    background-color: var(--btn-bg-active);
+    box-shadow: var(--btn-shadow-active);
+    border-color: var(--btn-border);
+    color: var(--btn-text-active);
+}
+
+/* 小尺寸按钮 */
+.btn.clickable.btn-sm {
+    padding: var(--space-1) var(--space-2);
+    font-size: 12px;
+    border-radius: calc(var(--radius) - 2px);
+}
+
+/* 按钮组 */
+.button-group {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.button-group .btn.clickable {
+    min-width: 0;
+}
+
+/* 按钮内的图标 */
+.btn.clickable .icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.btn.clickable:hover .icon {
+    transform: scale(1.1);
+}
+
+/* 加载动画 */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 链接样式 */
+a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+a:hover {
+    color: var(--text-primary);
+}
+
+/* 标签页激活状态 */
+.tab.active {
+    color: var(--text-primary);
+    background-color: var(--clickable);
+}
+
+/* 历史记录按钮 */
+.history-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--btn-bg);
+    color: var(--btn-text);
+    border: 1px solid var(--btn-border);
+    box-shadow: var(--btn-shadow);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    writing-mode: vertical-rl;
+    padding: 12px 6px;
+    border-radius: 4px 0 0 4px;
+    z-index: 100;
+    cursor: pointer;
+}
+
+.history-toggle:hover {
+    background-color: var(--btn-bg-hover);
+    box-shadow: var(--btn-shadow-hover);
+    color: var(--btn-text-hover);
+}
+
+.history-toggle:active {
+    background-color: var(--btn-bg-active);
+    box-shadow: var(--btn-shadow-active);
+    color: var(--btn-text-active);
+}
+
+.history-toggle.active {
+    background-color: var(--btn-bg-active);
+    box-shadow: var(--btn-shadow-active);
+    color: var(--btn-text-active);
+    right: 300px;
+}
+
+@media screen and (max-width: 700px) {
+    .history-toggle.active {
+        right: 100%;
+    }
+}
+
+/* 提示文本样式 */
+.text-hint {
+    color: var(--text-hint);
+}
+
+.text-hint-light {
+    color: var(--text-hint-light);
+}
+
+.text-hint-lighter {
+    color: var(--text-hint-lighter);
+}
+
+/* 空状态提示 */
+.empty-state {
+    color: var(--text-hint);
+    text-align: center;
+    padding: var(--space-4);
+    font-size: 14px;
+}
+
+/* 占位符文本 */
+::placeholder {
+    color: var(--text-hint-light);
+    opacity: 1;
+}
+
+/* 暗色主题 */
+[data-theme="dark"] {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-active: #1e40af;
+    --primary-light: rgba(37, 99, 235, 0.1);
+    
+    --text-primary: #ffffff;
+    --text-secondary: var(--gray-400);
+    --text-disabled: var(--gray-600);
+    
+    --bg-primary: var(--gray-950);
+    --bg-secondary: var(--gray-900);
+    --bg-tertiary: var(--gray-800);
+    --bg-highlight: rgba(255, 255, 255, 0.03);
+    --bg-header: var(--gray-800);
+    --bg-content: var(--gray-900);
+    
+    --border-color: var(--gray-800);
+}

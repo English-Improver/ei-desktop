@@ -62,7 +62,7 @@
 
             <!-- 历史记录按钮 -->
             <button 
-                class="history-toggle" 
+                class="history-toggle"
                 :class="{ active: showHistory }"
                 @click="toggleHistory"
                 :title="showHistory ? '隐藏历史记录' : '显示历史记录'"
@@ -208,7 +208,7 @@ async function saveSentence() {
             words: words.value
         });
 
-        if (response.success && response.data) {
+        if (response.data) {
             // 更新本地存储
             await updateLocalStorage();
             return response.data;
@@ -392,12 +392,7 @@ const goToBook = () => {
 // 检查句子是否已保存
 const isSentenceSaved = () => {
     if (!sentence.value || !explanation.value) return false;
-    
-    return sentenceHistory.value.some(
-        (item) => 
-            item.sentence === sentence.value && 
-            item.explanation === explanation.value
-    );
+  return false;  
 };
 
 // 重新加载历史句子
@@ -422,7 +417,7 @@ const saveWordInSentence = async (word: WordVO, contextType: string) => {
         const res = await sentenceService.saveWordInSentence(word, contextType);
         console.log('Word saved to API:', res);
 
-        if (res.success) {
+        if (res) {
             // 找到并更新单词的状态
             const wordIndex = words.value.findIndex(w => w.word === word.word);
             if (wordIndex !== -1) {
@@ -437,6 +432,8 @@ const saveWordInSentence = async (word: WordVO, contextType: string) => {
 
             // 更新本地存储
             await updateLocalStorage();
+            // 更新历史记录
+            updateHistory(word);
 
             // 通知用户
             notificationRef.value?.show('单词保存成功', 'success');
@@ -596,32 +593,19 @@ onMounted(() => {
 }
 
 :deep(.sentence-input-container) {
-    margin-bottom: var(--space-4);
+    margin-bottom: 0;
 }
 
 /* 历史记录按钮 */
 .history-toggle {
     position: fixed;
-    right: v-bind(showHistory ? '300px' : '0');
+    right: 0;
     top: 50%;
     transform: translateY(-50%);
     writing-mode: vertical-rl;
-    padding: 12px 6px;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 4px 0 0 4px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 101;
-}
-
-.history-toggle:hover {
-    background: var(--primary-color-dark);
-}
-
-.history-toggle.active {
-    background: var(--text-secondary);
+    padding: 12px 6px !important;
+    border-radius: 4px 0 0 4px !important;
+    z-index: 100;
 }
 
 /* 历史记录面板 */
@@ -689,7 +673,7 @@ onMounted(() => {
     }
 
     .history-toggle {
-        right: v-bind(showHistory ? '100%' : '0');
+        right: 0;
     }
 
     .analysis-area {

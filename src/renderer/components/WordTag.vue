@@ -59,8 +59,8 @@
             <transition name="expand">
                 <div v-if="expandedWords[index]" class="details">
                     <!-- Phonetic Section -->
-                    <div class="phonetic">
-                        <span class="phonetic-text">{{ word.phonetic }}</span>
+                    <div v-if="word.pronunciation" class="phonetic">
+                        <span class="phonetic-text">{{ word.pronunciation }}</span>
                         <button
                             v-if="word.audioUrl"
                             class="play-btn"
@@ -71,16 +71,15 @@
                         </button>
                     </div>
                     
-                    <!-- Translation -->
-                    <div class="translation">{{ word.translation }}</div>
-                    
                     <!-- Sentence Meaning -->
                     <div v-if="word.meaningInSentence" class="sentence-meaning">
-                        {{ word.meaningInSentence }}
+                        <div class="meaning-label">句中含义：</div>
+                        <div class="meaning-content">{{ word.meaningInSentence }}</div>
                     </div>
                     
                     <!-- Word Meanings -->
-                    <div v-if="word.meanings" class="meanings">
+                    <div v-if="word.meanings && word.meanings.length" class="meanings">
+                        <div class="meaning-label">词典解释：</div>
                         <div
                             v-for="(meaning, mIndex) in word.meanings"
                             :key="mIndex"
@@ -89,6 +88,12 @@
                             <span class="part-of-speech">{{ meaning.property }}</span>
                             <span class="definition">{{ meaning.meaning }}</span>
                         </div>
+                    </div>
+
+                    <!-- Word Type -->
+                    <div class="word-type">
+                        <span class="type-label">类型：</span>
+                        <span class="type-value">{{ word.isWord === 1 ? '单词' : '词组' }}</span>
                     </div>
                 </div>
             </transition>
@@ -156,34 +161,55 @@ const allWordsSaved = computed(() => {
 .word-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     height: 100%;
     overflow-y: auto;
-    padding-right: 8px;
+    padding: 6px;
+    background: var(--color-bg-panel);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+}
+
+.word-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.word-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.word-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: 4px;
+    border: 2px solid var(--color-bg-panel);
+}
+
+.word-tag-container {
+    flex-shrink: 0;
 }
 
 .tag {
     display: flex;
     align-items: center;
-    padding: 4px 12px;
-    background-color: #e6f4ff;
-    color: #1677ff;
-    border: 1px solid #91caff;
-    border-radius: 16px;
+    padding: 5px 8px;
+    background-color: var(--color-bg-panel);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.15s ease;
     user-select: none;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .tag:hover {
-    background-color: #bae0ff;
-    border-color: #69b1ff;
+    background-color: var(--color-bg-secondary);
 }
 
 .tag.active {
-    background-color: #bae0ff;
-    border-color: #69b1ff;
-    border-radius: 16px 16px 0 0;
+    background-color: var(--color-bg-secondary);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
 .tag-content {
@@ -191,69 +217,69 @@ const allWordsSaved = computed(() => {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    gap: 8px;
+    min-height: 24px;
 }
 
 .word-text {
-    font-weight: 500;
+    font-size: 13px;
+    color: var(--color-text);
+    padding: 0 2px;
 }
 
 .tag-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
 }
 
 .context-dropdown {
-    padding: 2px 4px;
+    padding: 1px 2px;
     font-size: 12px;
-    border: 1px solid #91caff;
-    border-radius: 8px;
-    background-color: white;
-    color: #1677ff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-bg-panel);
+    color: var(--color-text);
     cursor: pointer;
     outline: none;
-    transition: all 0.3s ease;
-    width: 40px;
-}
-
-.context-dropdown:hover {
-    border-color: #69b1ff;
-    background-color: #f5f5f5;
-}
-
-.context-dropdown:focus {
-    border-color: #1677ff;
-    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+    transition: all 0.15s ease;
+    width: 28px;
+    text-align: center;
 }
 
 .save-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    opacity: 0.6;
-    transition: all 0.2s;
+    color: var(--color-text);
+    opacity: 0.5;
+    transition: all 0.15s ease;
 }
 
 .save-btn:hover:not(:disabled) {
-    opacity: 1;
+    opacity: 0.8;
 }
 
 .save-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.3;
     cursor: not-allowed;
 }
 
 .save-icon {
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .arrow {
-    font-size: 10px;
-    transition: transform 0.3s ease;
+    font-size: 8px;
+    transition: transform 0.2s ease;
+    color: var(--color-text);
+    opacity: 0.3;
+    padding: 4px;
 }
 
 .arrow.rotated {
@@ -262,87 +288,115 @@ const allWordsSaved = computed(() => {
 
 .details {
     margin-top: -1px;
-    padding: 12px;
-    background-color: white;
-    border: 1px solid #69b1ff;
+    padding: 8px;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
     border-top: none;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
 }
 
 .phonetic {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-    color: #666;
+    gap: 4px;
+    margin-bottom: 6px;
+    color: var(--color-text);
+    opacity: 0.6;
 }
 
 .phonetic-text {
-    font-size: 13px;
+    font-size: 12px;
+    font-family: monospace;
 }
 
 .play-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 2px;
-    font-size: 14px;
-    opacity: 0.6;
-    transition: opacity 0.2s;
+    color: var(--color-text);
+    opacity: 0.5;
+    transition: opacity 0.15s;
 }
 
 .play-btn:hover {
-    opacity: 1;
-}
-
-.translation {
-    margin-bottom: 8px;
-    color: #333;
-    font-size: 0.95em;
-    line-height: 1.4;
+    opacity: 0.8;
 }
 
 .sentence-meaning {
-    margin-bottom: 8px;
-    color: #666;
-    font-size: 0.9em;
-    line-height: 1.4;
-    padding-left: 8px;
-    border-left: 2px solid #e8e8e8;
+    margin: 6px 0;
+}
+
+.meaning-label {
+    font-size: 12px;
+    color: var(--color-text);
+    opacity: 0.5;
+    margin-bottom: 3px;
+}
+
+.meaning-content {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--color-text);
 }
 
 .meanings {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    margin: 6px 0;
 }
 
 .meaning-item {
     display: flex;
-    gap: 8px;
-    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 3px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.meaning-item:last-child {
+    margin-bottom: 0;
 }
 
 .part-of-speech {
-    color: #666;
-    font-style: italic;
-    font-size: 0.9em;
-    min-width: 60px;
+    color: var(--color-text);
+    opacity: 0.5;
+    min-width: 28px;
 }
 
 .definition {
-    color: #333;
-    line-height: 1.4;
+    color: var(--color-text);
+    flex: 1;
+}
+
+.word-type {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--color-border);
+    font-size: 12px;
+}
+
+.type-label {
+    color: var(--color-text);
+    opacity: 0.5;
+}
+
+.type-value {
+    color: var(--color-text);
 }
 
 .save-all-container {
-    padding: 4px;
-    border-bottom: 1px solid #e8e8e8;
-    margin-bottom: 8px;
+    padding: 2px 0;
+    margin-bottom: 6px;
     position: sticky;
     top: 0;
-    background-color: white;
+    background-color: var(--color-bg-panel);
     z-index: 1;
 }
 
@@ -352,32 +406,30 @@ const allWordsSaved = computed(() => {
     justify-content: center;
     gap: 4px;
     width: 100%;
-    padding: 6px 12px;
-    background-color: #e6f4ff;
-    color: #1677ff;
-    border: 1px solid #91caff;
-    border-radius: 12px;
+    padding: 4px 8px;
+    background-color: var(--color-bg-panel);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.3s;
-    font-size: 13px;
+    transition: all 0.15s ease;
+    font-size: 12px;
+    min-height: 24px;
 }
 
 .save-all-btn:hover:not(:disabled) {
-    background-color: #bae0ff;
-    border-color: #69b1ff;
+    background-color: var(--color-bg-secondary);
 }
 
 .save-all-btn:disabled {
-    background-color: #f0f0f0;
-    border-color: #d9d9d9;
-    color: #bfbfbf;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
 /* Expand animation */
 .expand-enter-active,
 .expand-leave-active {
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
     max-height: 300px;
     overflow: hidden;
 }

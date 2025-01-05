@@ -1,15 +1,15 @@
 <template>
     <div class="history-tabs">
-        <div class="view-selector">
+        <div class="tabs">
             <button 
-                class="view-btn"
+                class="tab-btn"
                 :class="{ active: currentView === 'sentences' }"
                 @click="currentView = 'sentences'"
             >
                 句子历史
             </button>
             <button 
-                class="view-btn"
+                class="tab-btn"
                 :class="{ active: currentView === 'words' }"
                 @click="currentView = 'words'"
             >
@@ -26,23 +26,24 @@
                     placeholder="搜索句子..."
                     @input="handleSentenceSearch"
                 >
+                <i class="icon-search"></i>
             </div>
 
-            <div class="sentence-list">
+            <div class="history-list">
                 <div 
                     v-for="(sentence, index) in filteredSentences" 
                     :key="index"
-                    class="sentence-item"
+                    class="history-item"
                     :class="{ active: selectedSentenceIndex === index }"
                     @click="selectSentence(index)"
                 >
-                    <div class="sentence-preview">{{ sentence.sentence }}</div>
-                    <div class="sentence-meta">
-                        <span class="word-count">{{ sentence.words?.length || 0 }} 个单词</span>
-                        <button class="reload-btn" @click.stop="reloadSentence(sentence)">
-                            重新加载
-                        </button>
+                    <div class="item-content">
+                        <p class="item-text">{{ sentence.sentence }}</p>
                     </div>
+                </div>
+                <div v-if="filteredSentences.length === 0" class="empty-state">
+                    <i class="icon-empty"></i>
+                    <p>暂无历史记录</p>
                 </div>
             </div>
         </div>
@@ -56,31 +57,41 @@
                     placeholder="搜索单词..."
                     @input="handleWordSearch"
                 >
+                <i class="icon-search"></i>
             </div>
 
-            <div class="word-list">
+            <div class="history-list">
                 <div 
                     v-for="(word, index) in filteredWords" 
                     :key="index"
-                    class="word-item"
+                    class="history-item word-item"
                 >
-                    <div class="word-header">
-                        <span class="word-text">{{ word.word }}</span>
-                        <span class="pronunciation" v-if="word.pronunciation">
-                            /{{ word.pronunciation }}/
-                        </span>
-                    </div>
-                    <div class="word-meaning">{{ word.meaningInSentence }}</div>
-                    <div class="meanings-list">
-                        <div v-for="(meaning, mIndex) in word.meanings" :key="mIndex" class="meaning-item">
-                            <span class="part-of-speech">{{ meaning.property }}</span>
-                            <span class="definition">{{ meaning.meaning }}</span>
+                    <div class="item-content">
+                        <div class="word-header">
+                            <p class="item-title">{{ word.word }}</p>
+                            <span v-if="word.pronunciation" class="pronunciation">[{{ word.pronunciation }}]</span>
+                        </div>
+                        <p class="item-subtitle">{{ word.meaningInSentence }}</p>
+                        <div class="meanings-list">
+                            <div v-for="(meaning, idx) in word.meanings" :key="idx" class="meaning-item">
+                                <span class="property">{{ meaning.property }}</span>
+                                <span class="meaning">{{ meaning.meaning }}</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="sentence-context" v-if="word.sentence">
-                        <div class="context-label">例句：</div>
-                        <div class="context-text">{{ word.sentence }}</div>
+                    <div class="item-actions">
+                        <button 
+                            class="action-btn"
+                            @click.stop="copyWord(word)"
+                            title="复制"
+                        >
+                            <i class="icon-copy"></i>
+                        </button>
                     </div>
+                </div>
+                <div v-if="filteredWords.length === 0" class="empty-state">
+                    <i class="icon-empty"></i>
+                    <p>暂无历史记录</p>
                 </div>
             </div>
         </div>
@@ -131,6 +142,10 @@ const selectedSentence = computed(() => {
 
 function selectSentence(index: number) {
     selectedSentenceIndex.value = index;
+    const sentence = filteredSentences.value[index];
+    if (sentence) {
+        reloadSentence(sentence);
+    }
 }
 
 function handleSentenceSearch() {
@@ -144,224 +159,259 @@ function handleWordSearch() {
 function reloadSentence(sentence: SaveSentenceDTO) {
     emit('reloadSentence', sentence);
 }
+
+function copyWord(word: WordVO) {
+    // 复制单词逻辑
+}
 </script>
 
 <style scoped>
 .history-tabs {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - var(--nav-height));
-    margin-top: var(--nav-height);
+    height: 100%;
     background: var(--color-bg-panel);
+    border-radius: var(--radius);
+    overflow: hidden;
 }
 
-.view-selector {
-    padding: 12px;
+.tabs {
     display: flex;
-    gap: 8px;
+    padding: 16px 20px;
+    gap: 12px;
+    background: var(--color-bg-panel);
     border-bottom: 1px solid var(--color-border);
+}
+
+.tab-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--color-text);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: var(--radius-sm);
+    opacity: 0.7;
+}
+
+.tab-btn:hover {
+    opacity: 0.9;
     background: var(--color-bg-secondary);
 }
 
-.view-btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    background: transparent;
-    color: var(--color-text);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.view-btn:hover {
-    background: var(--color-bg-hover);
-}
-
-.view-btn.active {
-    background: var(--primary-color);
-    color: white;
+.tab-btn.active {
+    color: var(--color-primary);
+    background: var(--color-primary-light);
+    opacity: 1;
 }
 
 .history-view {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    min-height: 0;
 }
 
 .search-box {
-    padding: 12px;
-    border-bottom: 1px solid var(--color-border);
+    position: relative;
+    padding: 12px 20px;
 }
 
 .search-box input {
     width: 100%;
-    padding: 8px;
+    height: 36px;
+    padding: 0 36px 0 12px;
     border: 1px solid var(--color-border);
-    border-radius: 4px;
-    background: var(--color-bg-input);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
-.sentence-list, .word-list {
+.search-box input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background: var(--color-bg-panel);
+}
+
+.search-box .icon-search {
+    position: absolute;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-light);
+    font-size: 16px;
+}
+
+.history-list {
     flex: 1;
     overflow-y: auto;
-    padding: 8px;
+    padding: 0 20px 20px;
 }
 
-.sentence-item, .word-item {
-    padding: 12px;
-    border-radius: 4px;
+.history-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    margin-bottom: 8px;
     background: var(--color-bg-secondary);
-    margin-bottom: 8px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
     cursor: pointer;
-    transition: all 0.2s;
+    border: 1px solid transparent;
 }
 
-.sentence-item:hover, .word-item:hover {
+.history-item:hover {
     background: var(--color-bg-hover);
+    border-color: var(--color-border);
 }
 
-.sentence-item.active, .word-item.active {
-    background: var(--color-bg-active);
+.history-item.active {
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
 }
 
-.sentence-preview {
-    margin-bottom: 8px;
-    line-height: 1.4;
-    max-height: 60px;
+.item-content {
+    flex: 1;
+    min-width: 0;
+    margin-right: 16px;
+}
+
+.item-text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--color-text);
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
 }
 
-.sentence-meta {
+.item-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.4;
+}
+
+.item-subtitle {
+    margin: 6px 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text);
+    opacity: 0.8;
+}
+
+.item-actions {
     display: flex;
-    justify-content: space-between;
+    gap: 8px;
+}
+
+.action-btn {
+    display: flex;
     align-items: center;
-    font-size: 0.9em;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-text-light);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: var(--color-bg-panel);
+    color: var(--color-primary);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 0;
     color: var(--color-text-light);
 }
 
-.reload-btn {
-    padding: 4px 8px;
-    border: none;
-    border-radius: 4px;
-    background: var(--primary-color);
-    color: white;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: all 0.2s;
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
 }
 
-.reload-btn:hover {
-    background: var(--primary-color-dark);
+.empty-state p {
+    margin: 0;
+    font-size: 14px;
 }
 
-/* 美化滚动条 */
-.sentence-list::-webkit-scrollbar,
-.word-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.sentence-list::-webkit-scrollbar-track,
-.word-list::-webkit-scrollbar-track {
-    background: var(--color-bg-secondary);
-    border-radius: 3px;
-}
-
-.sentence-list::-webkit-scrollbar-thumb,
-.word-list::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 3px;
-}
-
-.sentence-list::-webkit-scrollbar-thumb:hover,
-.word-list::-webkit-scrollbar-thumb:hover {
-    background: var(--color-border-hover);
+.word-item {
+    padding: 16px;
 }
 
 .word-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 8px;
-}
-
-.word-text {
-    font-weight: 600;
-    color: var(--primary-color);
-    font-size: 14px;
+    margin-bottom: 4px;
 }
 
 .pronunciation {
-    color: var(--color-text-light);
-    font-size: 13px;
-}
-
-.word-meaning {
-    color: var(--color-text-light);
-    font-size: 13px;
-    line-height: 1.5;
-    margin-bottom: 8px;
-    padding-bottom: 8px;
-    border-bottom: 1px dashed var(--color-border);
+    font-size: 14px;
+    color: var(--color-text);
+    opacity: 0.7;
+    font-style: italic;
 }
 
 .meanings-list {
+    margin-top: 8px;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-bottom: 8px;
 }
 
 .meaning-item {
     display: flex;
+    align-items: baseline;
     gap: 8px;
     font-size: 13px;
     line-height: 1.5;
 }
 
-.part-of-speech {
-    color: var(--primary-color);
+.property {
+    color: var(--color-primary);
     font-weight: 500;
-    min-width: 32px;
     opacity: 0.8;
 }
 
-.definition {
-    color: var(--color-text-light);
-    flex: 1;
-}
-
-.sentence-context {
-    background: var(--color-bg-secondary);
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 13px;
-}
-
-.context-label {
-    color: var(--color-text-light);
-    margin-bottom: 4px;
-    font-size: 12px;
-}
-
-.context-text {
+.meaning {
     color: var(--color-text);
-    line-height: 1.5;
+    opacity: 0.9;
 }
 
-.empty-state {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px;
-    color: var(--color-text-light);
-    font-size: 13px;
-    background: var(--color-bg-secondary);
-    border-radius: 6px;
-    min-height: 120px;
+/* 自定义滚动条 */
+.history-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.history-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-light);
 }
 </style>

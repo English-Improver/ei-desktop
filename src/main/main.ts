@@ -1,4 +1,4 @@
-import {app, BrowserWindow, ipcMain, session} from 'electron';
+import {app, BrowserWindow, ipcMain, session, nativeImage} from 'electron';
 import {join} from 'path';
 import { HttpServer } from './http-server';
 
@@ -32,6 +32,8 @@ function createWindow () {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    frame: false, // 隐藏默认标题栏
+    titleBarStyle: 'hiddenInset', // macOS 风格的隐藏标题栏
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       nodeIntegration: false,
