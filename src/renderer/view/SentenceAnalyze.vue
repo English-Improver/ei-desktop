@@ -233,73 +233,56 @@ async function handleTranslateByButton(word: string) {
     try {
         isTranslating.value = true;
         console.log('Translating word:', word);
-        console.log('Current words before translation:', words.value);
 
         // 1. 调用API解释单词
-        try {
-            const response = await sentenceService.explainWordInSentence(
-                sentence.value,
-                word
-            );
-            console.log('Translation response:', response);
+        const response = await sentenceService.explainWordInSentence(
+            sentence.value,
+            word
+        );
+        console.log('Translation response:', response);
 
-            // 检查响应是否包含必要的字段
-            if (response && response.word && response.meaningInSentence) {
-                translatedWord = {
-                    ...response,
-                    saved: false,
-                    saving: false,
-                    contextType: '1'
-                };
-            } else {
-                console.error('Invalid translation response:', response);
-                notificationRef.value?.show('翻译响应格式错误', 'error');
-                return;
-            }
-        } catch (apiError) {
-            console.error('API call failed:', apiError);
-            notificationRef.value?.show('API调用失败：' + (apiError.message || '未知错误'), 'error');
-            return;
+        // 检查响应是否包含必要的字段
+        if (!response || !response.word || !response.meaningInSentence) {
+            throw new Error('翻译响应格式错误');
         }
 
-        // 2. 更新单词列表
-        try {
-            // 检查是否已存在相同的单词
-            const existingIndex = words.value.findIndex(w => w.word === translatedWord.word);
-            
-            if (existingIndex !== -1) {
-                // 如果存在，更新现有单词
-                const updatedWords = [...words.value];
-                updatedWords[existingIndex] = translatedWord;
-                words.value = updatedWords;
-                console.log('Updated existing word:', translatedWord);
-            } else {
-                // 如果不存在，添加到列表开头
-                words.value = [translatedWord, ...words.value];
-                console.log('Added new word:', translatedWord);
-            }
-            
-            console.log('Current words after update:', words.value);
-        } catch (updateError) {
-            console.error('Failed to update words list:', updateError);
-            notificationRef.value?.show('更新单词列表失败', 'error');
-            return;
+        // 2. 准备单词数据
+        translatedWord = {
+            ...response,
+            saved: false,
+            saving: false,
+            contextType: '1'
+        };
+
+        // 3. 更新单词列表
+        const existingIndex = words.value.findIndex(w => w.word === translatedWord.word);
+        if (existingIndex !== -1) {
+            words.value[existingIndex] = translatedWord;
+        } else {
+            words.value = [translatedWord, ...words.value];
         }
 
-        // 3. 更新本地存储和历史记录
-        try {
-            await updateLocalStorage(translatedWord);
-            // updateHistory 会同时更新 sentenceHistory 和 savedWords
-            updateHistory(translatedWord);
-            notificationRef.value?.show('单词解释成功', 'success');
-        } catch (storageError) {
-            console.error('Failed to update local storage:', storageError);
-            notificationRef.value?.show('保存到本地存储失败', 'error');
-            // 不需要return，因为单词列表已经更新了
+        // 4. 保存到本地存储
+        const savedWord = localStorageService.saveWord(translatedWord);
+        
+        // 5. 更新单词状态
+        const updatedIndex = words.value.findIndex(w => w.word === savedWord.word);
+        if (updatedIndex !== -1) {
+            words.value[updatedIndex] = {
+                ...words.value[updatedIndex],
+                ...savedWord,
+                saved: true
+            };
         }
+
+        // 6. 更新句子存储和历史记录
+        await updateLocalStorage(savedWord);
+        updateHistory(savedWord);
+
+        notificationRef.value?.show('单词解释成功', 'success');
     } catch (error) {
-        console.error('Unexpected error in handleTranslateByButton:', error);
-        notificationRef.value?.show('处理单词时发生未知错误', 'error');
+        console.error('Failed to translate word:', error);
+        notificationRef.value?.show(error.message || '解释单词失败', 'error');
     } finally {
         isTranslating.value = false;
     }

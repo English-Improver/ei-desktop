@@ -342,6 +342,31 @@ defineExpose({
     font-size: 14px;
     line-height: 1.4;
     color: var(--color-text);
+
+    /* 自定义滚动条样式 */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+
+    /* Webkit 浏览器的滚动条样式 */
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--color-border);
+        border-radius: 3px;
+        border: 1px solid var(--color-bg-panel);
+
+        &:hover {
+            background-color: var(--color-border-hover, #666);
+        }
+    }
 }
 
 .sentence-input::placeholder {
