@@ -100,7 +100,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { SaveSentenceDTO, WordVO } from '@/types/api.ts';
+import { SaveSentenceDTO, WordVO } from '@/types/renderer/api.ts';
 
 const props = defineProps<{
     sentences: SaveSentenceDTO[];
