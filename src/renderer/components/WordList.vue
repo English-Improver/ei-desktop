@@ -8,15 +8,17 @@
             <div class="group-header">
                 {{ getGroupHeader(words[0]) }}
             </div>
-            <div
-                v-for="word in words"
-                :key="word.id"
-                class="word-item"
-                @click="$emit('select-word', word)"
-            >
-                <h3>{{ word.word }}</h3>
-                <p class="word-brief">{{ word.meaning }}</p>
-                <span class="word-date">{{ formatDate(word.addedDate) }}</span>
+            <div class="word-grid">
+                <div
+                    v-for="word in words"
+                    :key="word.id"
+                    class="word-item"
+                    @click="$emit('select-word', word)"
+                >
+                    <h3>{{ word.word }}</h3>
+                    <p class="word-brief">{{ word.meaning }}</p>
+                    <span class="word-date">{{ formatDate(word.addedDate) }}</span>
+                </div>
             </div>
         </div>
     </div>
@@ -83,44 +85,108 @@ export default {
 
 <style>
 .word-list {
-    /* border: 1px solid #eee; */
-    /* border-radius: 8px; */
-    overflow: hidden;
+    padding: 16px;
+}
+
+.word-group {
+    margin-bottom: 20px;
+}
+
+.word-group:last-child {
+    margin-bottom: 0;
 }
 
 .group-header {
-    background: #f5f5f5;
-    padding: 8px 16px;
-    font-weight: bold;
-    border-bottom: 1px solid #eee;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    color: #2c3e50;
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.word-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
 }
 
 .word-item {
-    padding: 16px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.2s;
-    border-bottom: 1px solid #eee;
+    transition: all 0.2s ease;
+    background: white;
+    display: flex;
+    flex-direction: column;
 }
 
 .word-item:hover {
-    background-color: #f9f9f9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-color: #3498db;
 }
 
 .word-item h3 {
-    margin: 0 0 8px 0;
-    color: #333;
+    margin: 0 0 4px 0;
+    color: #2c3e50;
+    font-size: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .word-brief {
     margin: 0;
-    color: #666;
-    font-size: 0.9em;
+    color: #4a5568;
+    font-size: 13px;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    flex: 1;
 }
 
 .word-date {
-    display: block;
+    color: #718096;
+    font-size: 12px;
     margin-top: 8px;
-    color: #999;
-    font-size: 0.8em;
+}
+
+@media (max-width: 768px) {
+    .word-list {
+        padding: 12px;
+    }
+
+    .word-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 8px;
+    }
+
+    .word-item {
+        padding: 10px;
+    }
+
+    .word-item h3 {
+        font-size: 14px;
+    }
+
+    .word-brief {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .word-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
